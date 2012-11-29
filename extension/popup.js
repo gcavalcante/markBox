@@ -14,20 +14,7 @@
  * limitations under the License.
  */
 
-var input = {'bookmarks': 
-             [
-               {'title': 'Shared Bookmarks',
-		'children': []
-               }
-             ]
-            };
 
-
-var facebook = new OAuth2('facebook', {
-    client_id: '365992973487014',
-    client_secret: '8a51d68b0e1337b14d0466ca235857dc',
-    api_scope: 'read_stream,user_likes'
-});
 facebook.authorize(function() {
 
     // Make an XHR that creates the task
@@ -45,7 +32,8 @@ facebook.authorize(function() {
 		}
 		console.log(input)
 		document.querySelector('#music').innerHTML = html;
-		addNewTree(input);
+		findBookmarkFolder("Shared Bookmarks", mylog);
+		//addNewTree(input);
 		return;
 
 	    } else {
@@ -75,19 +63,30 @@ $(function() {
   });
 });
 
-function findBookmarkFolder(query) {
-    var bookmarkTreeNodes = chrome.bookmarks.getTree(function(bookmarkTreeNodes, query, callback) {
+function findBookmarkFolder(query, callback) {
+    var bookmarkTreeNodes = chrome.bookmarks.getTree(function(bookmarkNodes) {
 	var i;
+	console.log(query);
 	for (i = 0; i < bookmarkNodes.length; i++) {
 	    findBookmarkFolderHelper(bookmarkNodes[i], query, callback);
 	}
     });
 }
 
-function findBookmarkFolderHelper(node, query) {
-    if (String(bookmarkNode.title).indexOf(query) != -1) {    
-	callback(bookmarkNode.id, bookmarkNode.title);
+function findBookmarkFolderHelper(node, query, callback) {
+    if (node.children) {
+	for (var i = 0; i < node.children.length; i++) {
+	    findBookmarkFolderHelper(node.children[i], query, callback);
+	}
     }
+    if (String(node.title).indexOf(query) != -1) {    
+	callback(node.id, node.title);
+    }   
+}
+
+function mylog(id, title) {
+    console.log(id);
+    console.log(title);
 }
 
 // Traverse the bookmark tree, and print the folder and nodes.
