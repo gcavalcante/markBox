@@ -34,12 +34,16 @@ facebook.authorize(function() {
 		for (var i = 0; i < parsed.data.length; i++) {
         var groupname  = parsed.data[i]['name'];
         var id  = parsed.data[i]['id']
-        $('#tabslist').append('<li><a href=\"#tab" + i + "\" data-toggle=\"tab\">' + parsed.data[i].name + '<input type="checkbox" style="float: left; margin-right: 10px;" name=\"checkbox' + id + '\" value=\"' + id + '\"> </li>');
-        //$('#tabslist').append("<li><a href=\"#tab" + i + "\" data-toggle=\"tab\">" + groupname + "</a></li>");
+        $('#tabslist').append('<li><a href=\"#tab' + i + '\" data-toggle=\"tab\" style=\"padding: 10px;\">' + 
+                              parsed.data[i].name + 
+                              '<div class=\"toggle-button-class pull-right\" style=\"margin-left: 10px;\"><input type=\"checkbox\" checked=\"checked\"  id=\"check' +
+                              id +  '\"></div>' + '</li>');
 		    $('#tabscontent').append("<div class=\"tab-pane\" id=\"tab" + i + "\"><h3>Links do grupo " + groupname + "</h3></div>");
         //console.log(parsed.data[i]);
-		}
+		    
+    }
 
+    $('.toggle-button-class').toggleButtons({ width: 60, height: 20,  font: {'font-size': '8px'}})
 
 		//document.querySelector('#groups').innerHTML = html;
     		return;
