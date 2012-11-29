@@ -10,7 +10,7 @@ OAuth2.adapter('facebook', {
   },
 
   redirectURL: function(config) {
-    return 'http://www.facebook.com/robots.txt';
+      return 'https://www.facebook.com/connect/login_success.html';
   },
 
   parseAuthorizationCode: function(url) {

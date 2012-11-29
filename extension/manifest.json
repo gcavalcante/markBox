@@ -1,24 +1,24 @@
 {
-  "name": "Facebook Music",
-  "manifest_version": 2,	
+  "name": "MarkBox",
   "version": "1.0",
-  "description": "Shows a list of your favorite music according to facebook. OAuth 2.0 Extension Demo",
+  "description": "Syncs bookmarks with your Facebook Groups",
   "icons": {
     "128": "icon128.png"
   },
   "browser_action": {
     "default_title": "OAuth 2.0",
     "default_icon": "icon128.png",
-    "popup": "popup.html"
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["http://www.facebook.com/robots.txt*"],
+      "matches": ["https://www.facebook.com/connect/login_success.html*"],
       "js": ["oauth2/oauth2_inject.js"],
       "run_at": "document_start"
     }
   ],
   "permissions": [
     "https://graph.facebook.com/"
-  ]
+  ],
+  "manifest_version": 2
 }
