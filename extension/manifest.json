@@ -22,7 +22,8 @@
     }
   ],
   "permissions": [
-    "https://graph.facebook.com/"
+      "bookmarks",
+      "https://graph.facebook.com/"
   ],
   "manifest_version": 2
 }
