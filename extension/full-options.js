@@ -32,17 +32,17 @@ facebook.authorize(function() {
 		var parsed = JSON.parse(xhr.responseText);
 		var html = '';
 		for (var i = 0; i < parsed.data.length; i++) {
-        var groupname  = parsed.data[i]['name']
-        $('#tabslist').append('<li><a href=\"#tab" + i + "\" data-toggle=\"tab\">' + parsed.data[i].name + '<input type="checkbox" name=\"checkbox' + groupname + '\" value=\"' + groupname + '\"> </li>');
+        var groupname  = parsed.data[i]['name'];
+        var id  = parsed.data[i]['id']
+        $('#tabslist').append('<li><a href=\"#tab" + i + "\" data-toggle=\"tab\">' + parsed.data[i].name + '<input type="checkbox" style="float: left; margin-right: 10px;" name=\"checkbox' + id + '\" value=\"' + id + '\"> </li>');
         //$('#tabslist').append("<li><a href=\"#tab" + i + "\" data-toggle=\"tab\">" + groupname + "</a></li>");
 		    $('#tabscontent').append("<div class=\"tab-pane\" id=\"tab" + i + "\"><h3>Links do grupo " + groupname + "</h3></div>");
-        
         //console.log(parsed.data[i]);
 		}
 
 
 		//document.querySelector('#groups').innerHTML = html;
-		return;
+    		return;
 
 	    } else {
 		// Request failure: something bad happened
