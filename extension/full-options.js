@@ -13,51 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+function getGroups(){
+console.log(chrome.extension.getBackgroundPage().groupsIsReady);
 
-var facebook = new OAuth2('facebook', {
-    client_id: '365992973487014',
-    client_secret: '8a51d68b0e1337b14d0466ca235857dc',
-    api_scope: 'read_stream,user_likes'
-});
-facebook.authorize(function() {
+console.log(chrome.extension.getBackgroundPage().groups);
+var parsed = chrome.extension.getBackgroundPage().groups;
+for (var i = 0; i < parsed.length; i++) {
+    var groupname  = parsed[i]['name'];
+    var id  = parsed[i]['id'];
+    $('#tabslist').append('<li><a href=\"#tab' + i + '\" data-toggle=\"tab\" style=\"padding: 10px;\">' + 
+                          parsed[i].name + 
+                          '<div class=\"toggle-button-class pull-right\" style=\"margin-left: 10px;\"><input type=\"checkbox\" checked=\"checked\"  id=\"check' +
+                          id +  '\"></div>' + '</li>');
+    $('#tabscontent').append("<div class=\"tab-pane\" id=\"tab" + i + "\"><h3>Links do grupo " + groupname + "</h3></div>");
+    
+}
 
-    //document.addEventListener('DOMContentLoaded', function() {
+$('.toggle-button-class').toggleButtons({ width: 60, height: 20,  font: {'font-size': '8px'}});
+      //return parsed;
+}
 
-    // Make an XHR that creates the task
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function(event) {
-	if (xhr.readyState == 4) {
-	    if(xhr.status == 200) {
-		// Great success: parse response with JSON
-		var parsed = JSON.parse(xhr.responseText);
-		var html = '';
-		for (var i = 0; i < parsed.data.length; i++) {
-        var groupname  = parsed.data[i]['name'];
-        var id  = parsed.data[i]['id']
-        $('#tabslist').append('<li><a href=\"#tab' + i + '\" data-toggle=\"tab\" style=\"padding: 10px;\">' + 
-                              parsed.data[i].name + 
-                              '<div class=\"toggle-button-class pull-right\" style=\"margin-left: 10px;\"><input type=\"checkbox\" checked=\"checked\"  id=\"check' +
-                              id +  '\"></div>' + '</li>');
-		    $('#tabscontent').append("<div class=\"tab-pane\" id=\"tab" + i + "\"><h3>Links do grupo " + groupname + "</h3></div>");
-        //console.log(parsed.data[i]);
-		    
-    }
-
-    $('.toggle-button-class').toggleButtons({ width: 60, height: 20,  font: {'font-size': '8px'}})
-
-		//document.querySelector('#groups').innerHTML = html;
-    		return;
-
-	    } else {
-		// Request failure: something bad happened
-	    }
-	}
-    };
-
-    xhr.open('GET', 'https://graph.facebook.com/me/groups', true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Authorization', 'OAuth ' + facebook.getAccessToken());
-
-    xhr.send();
-
-});
+getGroups();
