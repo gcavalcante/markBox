@@ -252,7 +252,9 @@ function getSharedBookmarks() {
 }
 
 function getGroupsFromLocalStorage() {
-return JSON.parse(localStorage['markBox']);
+    if (!localStorage['markBox'])
+	localStorage['markBox'] = JSON.stringify([]);
+    return JSON.parse(localStorage['markBox']);    
 }
 
 function findBookmarkFolder(query, callback) {
