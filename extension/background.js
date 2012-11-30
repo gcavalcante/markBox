@@ -8,6 +8,7 @@ var appId = "365992973487014";
 var successUrl = "http://amigonerd.cloudapp.net/fbsuccess";
 var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups,publish_stream&redirect_uri=" + successUrl;
 
+var currentUrls = {};
 
 var fbEndpoint = "https://graph.facebook.com/";
 
@@ -21,8 +22,8 @@ function onFacebookLogin() {
           var params = tabs[i].url.split('#')[1].split('&')[0].split('=')[1];
           localStorage.accessToken = params;
 
-          chrome.tabs.remove(tabs[i].id, function(){});
           chrome.tabs.onUpdated.removeListener(onFacebookLogin);
+          chrome.tabs.remove(tabs[i].id, function(){});
 
           authenticationCallback(localStorage.accessToken);
           return;
@@ -36,15 +37,21 @@ function isAuthenticated(callback){
   if(localStorage.accessToken){
 
     $.getJSON(fbEndpoint + 'me?access_token=' + localStorage.accessToken, function(data){
-      if(data.error)
+      if(data.error){
+        console.log("Not authenticated");
+        delete localStorage.accessToken;
         callback(false);
+      }
+
+      console.log("Authenticated");
 
       callback(true);
-    } ).error(function(){ alert('wut');  callback(false); });
+    } ).error(function(){ console.log("Not authenticated, error"); delete localStorage.accessToken; callback(false); });
  
     return;
   }
 
+  delete localStorage.accessToken;
   callback(false);
 }
 
@@ -52,10 +59,11 @@ function authenticate(callback){
   authenticationCallback = callback;
 
   isAuthenticated(function(isAuth){
-
-    if(isAuth)
+    if(isAuth){
+      console.log("Was already authenticated.")
       return authenticationCallback(localStorage.accessToken);
-    else {
+    } else {
+      console.log("Attempting to authenticate.")
       chrome.tabs.create({ url: fbLoginUrl });
       chrome.tabs.onUpdated.addListener(onFacebookLogin);
     }
@@ -70,6 +78,7 @@ var shouldOpenOptionTab = true;
 var shouldListen = true;
 
 var lastTreeAdded = null;
+var firstRun = true;
 
 function sync() {
     authenticate(function(accessToken) {
@@ -102,7 +111,7 @@ function sync() {
 				     }
 				 ]
 				};
-		// findBookmarkFolder("Shared Bookmarks", function (id, title) {
+		//findBookmarkFolder("Shared Bookmarks", function (id, title) {
 		//     console.log(id);
 		//     chrome.bookmarks.getSubTree(String(id), function (results) {
 		// 	var currentTree = results[0];
@@ -113,12 +122,23 @@ function sync() {
 		//     })
 		// });
 
-		if (JSON.stringify(lastTreeAdded) != JSON.stringify(dataToAdd)) {
-
-		    findBookmarkFolder("Shared Bookmarks", removeFolder);
-		    
+		console.log(dataToAdd);
+		if (lastTreeAdded != JSON.stringify(dataToAdd)) {
+		    console.log("New Links!");
 		    shouldListen = false;
-		    addNewTree(dataToAdd);
+
+		    if (!lastTreeAdded) {
+			findBookmarkFolder("Shared Bookmarks", removeFolder);
+			addNewTree(dataToAdd);
+		    }
+		    else {
+			for (var i = 0; i < data.bookmarks.length; i++) {
+			    var grp = data.bookmarks[i];
+			    findBookmarkFolder(grp.title, function (id, title) {
+				addNewSubTree(String(id), grp.children);
+			    });
+			}
+		    }
 		    setTimeout(function() { shouldListen = true }, 2000);
 
 		    if (shouldOpenOptionTab) {
@@ -127,7 +147,7 @@ function sync() {
 			});
 		    }
 		    shouldOpenOptionTab = false;
-		    lastTreeAdded = dataToAdd;
+		    lastTreeAdded = JSON.stringify(dataToAdd);
 		}
 	    }, 'json');
 	}, 'json');
@@ -159,6 +179,16 @@ chrome.bookmarks.onCreated.addListener(
 );
 chrome.bookmarks.get('0', function() {});
 
+function createFolder(id) {
+    $.getJSON(fbEndpoint + 'me/groups/' + id + '?access_token=' + accessToken, function (data) {
+	if (!data.success) {
+	    console.log('Deu Pau, login failure.');
+	    return;
+	}
+	console.log(data);
+    });
+}
+
 function groupIdFromGroupName(name) {
     return group_id_map[name];
 }
@@ -171,7 +201,7 @@ function getSharedBookmarks() {
 }
 
 function getGroupsFromLocalStorage() {
-    return mygroups;
+return JSON.parse(localStorage['markBox']);
 }
 
 function findBookmarkFolder(query, callback) {
@@ -189,7 +219,7 @@ function findBookmarkFolderHelper(node, query, callback) {
 	    findBookmarkFolderHelper(node.children[i], query, callback);
 	}
     }
-    if (String(node.title).indexOf(query) != -1) {    
+    if (String(node.title) == query) {   
 	callback(node.id, node.title);
     }   
 }
@@ -206,17 +236,29 @@ function addTreeNode(node, previous, callback) {
     var nodecopy = {};
     nodecopy['parentId'] = previous;
     nodecopy['title'] = node['title'];
-    if (node.hasOwnProperty('url'))
+    if (node.hasOwnProperty('url')) {
 	nodecopy['url'] = node['url'];
-    
+	
+	if(currentUrls[node['url']])
+            return;
+	if(currentUrls[previous] && currentUrls[previous][node['url']])
+            return;
+    }
     
     chrome.bookmarks.create(nodecopy, function (node_created) {
-	console.log(node_created);
-	if (!node_created.url)
-	    our_group_id_map[node_created.id] = groupIdFromGroupName(node_created.title);
-	if (callback && node_created)
-	    callback(node['children'], node_created['id']);
+    	console.log(node_created);
+    	if (!node_created.url)
+    	    our_group_id_map[node_created.id] = groupIdFromGroupName(node_created.title);
+    	if (callback && node_created){
+    	    callback(node['children'], node_created['id']);
+            currentUrls[node['url']] = true;
+            //currentUrls[previous][node['url']] = true;
+        }
     });
+    // if (!currentUrls[previous])
+    // 	currentUrls[previous] = {};
+    currentUrls[node['url']] = true;
+    //currentUrls[previous][node['url']] = true;
 }
 
 function addTreeNodes(bookmarkArray, previous) {
@@ -235,6 +277,10 @@ function addNewTree(treejson) {
   addTreeNodes(bookmarkArray, '1');
 }
 
+function addNewSubTree(parentId, treejson) {
+    var bookmarkArray = treejson;
+    addTreeNodes(bookmarkArray, String(parentId));
+}
 
 chrome.browserAction.onClicked.addListener(function(event){
     /*

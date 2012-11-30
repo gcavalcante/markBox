@@ -104,6 +104,7 @@ exports.add_bookmark = function(req, res){
 
         revision_id++;
 
+        conn.close();
         return res.json({ success: true });
       });
 
@@ -137,6 +138,7 @@ exports.delete_bookmark = function(req, res){
             return res.json({ success: false, error: err });
 
           revision_id++;
+          conn.close();
 
           return res.json({ success: true });
         });
@@ -182,7 +184,7 @@ exports.user_links = function(req, res){
 
         cursor.toArray(function(err, items){
           if(err)
-            return res.json({ success: false, error: err, message: "Error while finding bookmarks"  });
+            return res.json({ success: false, error: items, message: "Error while finding bookmarks"  });
 
           if(!items) 
             return res.json({ success: false });
@@ -229,6 +231,8 @@ exports.user_links = function(req, res){
 
           output['success'] = true;
           output['revision_id'] = revision_id;
+
+          conn.close();
 
           res.json(output);
 
@@ -314,7 +318,8 @@ exports.user_linklist = function(req, res){
               var cbook = bookmarks_by_group[group].bookmarks[i];
               var cbook_tree = {
                 title: cbook.title,
-                url: cbook.url
+                url: cbook.url,
+                owner: cbook.owner
               }
 
               cgroup.children.push(cbook_tree);
@@ -325,6 +330,8 @@ exports.user_linklist = function(req, res){
 
           output['success'] = true;
           output['revision_id'] = revision_id;
+
+          conn.close();
 
           res.json(output);
 
@@ -390,6 +397,8 @@ exports.user_sync = function(req, res){
               output[item.group_id].bookmarks.push(item);
             }
           }
+
+          conn.close();
 
           res.json(output);
 
