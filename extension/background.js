@@ -24,66 +24,71 @@ var groupsIsReady = false;
 var mygroups = [];
 var group_id_map = {};
 
-facebook.authorize(function() {
+function sync() {
+    facebook.authorize(function() {
 
-    // Make an XHR that creates the task
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function(event) {
-	if (xhr.readyState == 4) {
-	    if(xhr.status == 200) {
-		// Great success: parse response with JSON
-		var parsed = JSON.parse(xhr.responseText);
-		var html = '';
-		for (var i = 0; i < parsed.data.length; i++) {
-		    html += '<li>' + parsed.data[i].name + '</li>';
-		    console.log(parsed.data[i]);
-		    input['bookmarks'][0]['children'].push({'childen':[], 'title': parsed.data[i].name});
-		    groups.push(parsed.data[i]);
-		    mygroups.push(String(parsed.data[i].id));
-		    group_id_map[parsed.data[i].name] = String(parsed.data[i].id);
-		}
-		groupsIsReady = true;
-		console.log(input);
-		//document.querySelector('#music').innerHTML = html;
-		findBookmarkFolder("Shared Bookmarks", removeFolder);
-		$.post("http://markdrop.hp.af.cm/login", {access_token: facebook.getAccessToken()}, function (data) {
-		    if (!data.success) {
-			console.log('Deu Pau, login failure.');
-			return;
+	// Make an XHR that creates the task
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(event) {
+	    if (xhr.readyState == 4) {
+		if(xhr.status == 200) {
+		    // Great success: parse response with JSON
+		    var parsed = JSON.parse(xhr.responseText);
+		    var html = '';
+		    for (var i = 0; i < parsed.data.length; i++) {
+			html += '<li>' + parsed.data[i].name + '</li>';
+			console.log(parsed.data[i]);
+			input['bookmarks'][0]['children'].push({'childen':[], 'title': parsed.data[i].name});
+			groups = [];
+			groups.push(parsed.data[i]);
+			mygroups = [];
+			mygroups.push(String(parsed.data[i].id));
+			group_id_map[parsed.data[i].name] = String(parsed.data[i].id);
 		    }
-		    console.log(facebook.getAccessToken());
-		    console.log(mygroups);
-		    $.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
+		    groupsIsReady = true;
+		    console.log(input);
+		    //document.querySelector('#music').innerHTML = html;
+		    findBookmarkFolder("Shared Bookmarks", removeFolder);
+		    $.post("http://markdrop.hp.af.cm/login", {access_token: facebook.getAccessToken()}, function (data) {
 			if (!data.success) {
 			    console.log('Deu Pau, login failure.');
 			    return;
 			}
-			var dataToAdd = {'bookmarks': 
-					 [
-					     {'title': 'Shared Bookmarks',
-					      'children': data.bookmarks,
-					      'index': 0 
-					     }
-					 ]
-					};
-			console.log(dataToAdd);
-			addNewTree(dataToAdd);
+			console.log(facebook.getAccessToken());
+			console.log(mygroups);
+			$.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
+			    if (!data.success) {
+				console.log('Deu Pau, login failure.');
+				return;
+			    }
+			    var dataToAdd = {'bookmarks': 
+					     [
+						 {'title': 'Shared Bookmarks',
+						  'children': data.bookmarks,
+						  'index': 0 
+						 }
+					     ]
+					    };
+			    console.log(dataToAdd);
+			    addNewTree(dataToAdd);
+			}, 'json');
 		    }, 'json');
-		}, 'json');
-		return;
+		    return;
 
-	    } else {
-		// Request failure: something bad happened
+		} else {
+		    // Request failure: something bad happened
+		}
 	    }
-	}
-    };
+	};
 
-    xhr.open('GET', 'https://graph.facebook.com/me/groups', true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Authorization', 'OAuth ' + facebook.getAccessToken());
+	xhr.open('GET', 'https://graph.facebook.com/me/groups', true);
+	xhr.setRequestHeader('Content-Type', 'application/json');
+	xhr.setRequestHeader('Authorization', 'OAuth ' + facebook.getAccessToken());
 
-    xhr.send();
-});
+	xhr.send();
+    });
+}
+setInterval(sync, 50000);
 
 // Copyright (c) 2012 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -108,6 +113,16 @@ chrome.bookmarks.onCreated.addListener(
 		       console.log(data.error);
 		   }
 	       }, 'json');
+    }
+);
+chrome.bookmarks.onRemoved.addListener(
+    function(id, bookmark) {
+	console.log(bookmark);
+    }
+);
+chrome.bookmarks.onChanged.addListener(
+    function(id, bookmark) {
+	console.log(bookmark);
     }
 );
 chrome.bookmarks.get('0', function() {});
