@@ -45,7 +45,8 @@ facebook.authorize(function() {
 		}
 		console.log(input)
 		document.querySelector('#music').innerHTML = html;
-		addNewTree(input);
+		findBookmarkFolder("Shared Bookmarks", callback);
+		//addNewTree(input);
 		return;
 
 	    } else {
@@ -75,7 +76,7 @@ $(function() {
   });
 });
 
-function findBookmarkFolder(query) {
+function findBookmarkFolder(query, callback) {
     var bookmarkTreeNodes = chrome.bookmarks.getTree(function(bookmarkTreeNodes, query, callback) {
 	var i;
 	for (i = 0; i < bookmarkNodes.length; i++) {
@@ -84,10 +85,20 @@ function findBookmarkFolder(query) {
     });
 }
 
-function findBookmarkFolderHelper(node, query) {
+function findBookmarkFolderHelper(node, query, callback) {
     if (String(bookmarkNode.title).indexOf(query) != -1) {    
 	callback(bookmarkNode.id, bookmarkNode.title);
     }
+    if (node.children) {
+	for (var i = 0; i < node.children.length; i++) {
+	    findBookmarkFolderHelper(node.children[i], query, callback);
+	}
+    }
+}
+
+function mylog(id, title) {
+    console.log(id);
+    console.log(title);
 }
 
 // Traverse the bookmark tree, and print the folder and nodes.
