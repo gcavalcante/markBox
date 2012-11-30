@@ -52,10 +52,12 @@ function setupActions() {
  }
  
 function getGroups(){
-  if (chrome.extension.getBackgroundPage().groupsIsReady != true){
-    return;
-  }
-  var parsed = chrome.extension.getBackgroundPage().groups.sort(compare);
+  var unsorted_groups = chrome.extension.getBackgroundPage().authenticate(function(accessToken){
+    console.log("Authenticated.");
+    $.getJSON('https://graph.facebook.com/me/groups?access_token=' + accessToken, function(data){
+      console.log(data);
+
+  var parsed = data['data'].sort(compare);
   if (!localStorage.hasOwnProperty('markBox')){
     var grouplist = [];
   }
@@ -84,6 +86,11 @@ function getGroups(){
   }
   
   $('.toggle-button-class').toggleButtons({ width: 60, height: 20,  font: {'font-size': '8px'}});
+    });
+  });
+
+
+
 }
 
 getGroups();
