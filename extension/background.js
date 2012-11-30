@@ -151,7 +151,7 @@ chrome.bookmarks.onCreated.addListener(
 		});
 	    }, 5000);
 	}
-    chrome.tabs.create({url: "post-page.html"}, function(tab){});
+    // chrome.tabs.create({url: "post-page.html"}, function(tab){});
     }
 );
 chrome.bookmarks.get('0', function() {});

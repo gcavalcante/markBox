@@ -16,6 +16,12 @@ function populateGroups(){
 
   if (!localStorage.hasOwnProperty('markBox')){
     var grouplist = [];
+
+    var current_tab_id = 0;
+    chrome.tabs.getCurrent(function(tab){current_tab_id = tab.id;})
+
+    chrome.tabs.create({url: "full-options-page.html"}, function(tab){});
+    return;
   }
   else{
     var grouplist = JSON.parse(localStorage['markBox']);
