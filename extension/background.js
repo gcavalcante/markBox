@@ -60,21 +60,6 @@ function authenticate(callback){
   });
 }
 
-
-// var input = {'bookmarks': 
-//              [
-//                {'title': 'Shared Bookmarks',
-// 		'children': [],
-// 		'index': 0 
-//                }
-//              ]
-//             };
-
-
-// var topFolderID = -1;
-// var groups = [];
-// var groupsIsReady = false;
-// var mygroups = [];
 var group_id_map = {};
 var our_group_id_map = {};
 
