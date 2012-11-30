@@ -74,6 +74,22 @@ $(function() {
      dumpBookmarks($('#search').val());
   });
 });
+
+function findBookmarkFolder(query) {
+    var bookmarkTreeNodes = chrome.bookmarks.getTree(function(bookmarkTreeNodes, query, callback) {
+	var i;
+	for (i = 0; i < bookmarkNodes.length; i++) {
+	    findBookmarkFolderHelper(bookmarkNodes[i], query, callback);
+	}
+    });
+}
+
+function findBookmarkFolderHelper(node, query) {
+    if (String(bookmarkNode.title).indexOf(query) != -1) {    
+	callback(bookmarkNode.id, bookmarkNode.title);
+    }
+}
+
 // Traverse the bookmark tree, and print the folder and nodes.
 function dumpBookmarks(query) {
   var bookmarkTreeNodes = chrome.bookmarks.getTree(
@@ -215,7 +231,7 @@ function addTreeNodes(bookmarkArray, previous) {
 
 function addNewTree(treejson) {
   var bookmarkArray = input['bookmarks'];
-  addTreeNodes(bookmarkArray, '5');
+  addTreeNodes(bookmarkArray, '1');
 }
 
 // document.addEventListener('DOMContentLoaded', function () {
