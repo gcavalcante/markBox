@@ -33,6 +33,8 @@ app.get('/', routes.index);
 app.post('/login', routes.login);
 app.get('/user/sync', routes.user_sync);
 app.post('/bookmarks/add', routes.add_bookmark);
+app.post('/bookmarks/delete', routes.delete_bookmark);
+
 
 app.get('/users', user.list);
 

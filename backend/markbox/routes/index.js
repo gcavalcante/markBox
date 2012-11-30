@@ -34,7 +34,9 @@ var mongourl = generate_mongo_url(mongo);
  */
 
  var db = require('mongodb'),
- request = require('request');
+ request = require('request'),
+ ObjectID = db.ObjectID;
+
 
  function requireLogin(req, res){
   if(!req.session.authenticated){
@@ -78,7 +80,13 @@ exports.add_bookmark = function(req, res){
     return res.json({ success: false, error: "Missing fields"});
 
   db.connect(mongourl, function(err, conn){
+    if(err)
+      return res.json({ success: false, error: err });
+
     conn.collection('bookmarks', function(err, coll){
+      if(err)
+        return res.json({ success: false, error: err });
+
       var bookmark = {
         url: req.body.url,
         group_id: req.body.group_id,
@@ -88,9 +96,42 @@ exports.add_bookmark = function(req, res){
       coll.insert(bookmark, {safe: true}, function(err){
         if(err)
           return res.json({ success: false, error: "Server database error"});
+        
         return res.json({ success: true });
       });
 
+    });
+  });
+}
+
+exports.delete_bookmark = function(req, res){
+  if(!requireLogin(req, res)) return;
+
+  if(!req.body.id)
+    return res.json({ success: false, error: "Missing fields"});
+
+  db.connect(mongourl, function(err, conn){
+    if(err)
+      return res.json({ success: false, error: err });
+
+    conn.collection('bookmarks', function(err, coll){
+      if(err)
+        return res.json({ success: false, error: err });
+
+      coll.findOne({_id: new ObjectID(req.body.id)}, function(err, doc){
+        if(err)
+          return res.json({ success: false, error: err });
+
+        if(req.session.user_id != doc.owner)
+          return res.json({ success: false, error: "Access denied: User is not owner of bookmark"} );
+
+        coll.remove({_id: new ObjectID(req.body.id)}, function(err, doc){
+          if(err)
+            return res.json({ success: false, error: err });
+
+          return res.json({ success: true });
+        });
+      });
     });
   });
 }
@@ -115,26 +156,29 @@ exports.user_sync = function(req, res){
       groups[res_data[i].id] = res_data[i];
     }
 
-
     var output = {};
 
-
     db.connect(mongourl, function(err, conn){
+      if(err)
+        return res.json({ success: false, error: err });
+
       conn.collection('bookmarks', function(err, coll){
+        if(err)
+          return res.json({ success: false, error: err });
 
         var cursor = coll.find({group_id:{$in: group_ids}});
         console.log(JSON.stringify( {group_id:{$in: group_ids}} ));
 
         cursor.toArray(function(err, items){
-          if(err || !items) 
-            return res.json({success: false});
+          if(err)
+            return res.json({ success: false, error: err });
 
-          console.log(items);
+          if(!items) 
+            return res.json({ success: false });
 
           for(var i = 0; i < items.length; i++){
             var item = items[i];
 
-            console.log(item)
 
             if(!output[item.group_id]){
               output[item.group_id] = {
@@ -143,14 +187,11 @@ exports.user_sync = function(req, res){
                 bookmarks: [item]
               }
 
-              console.log('new: ' + item.group_id);
             } else {
               output[item.group_id].bookmarks.push(item);
-              console.log('old: ' + item.group_id);
             }
           }
 
-          console.log(output);
           res.json(output);
 
         });
