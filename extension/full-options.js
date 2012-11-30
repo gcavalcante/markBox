@@ -96,7 +96,7 @@ function getGroups(){
                   }
                   $('#tabscontent').append("<div class=\"tab-pane\" id=\"tab" + id + "\"></div>");
                            
-                   $.getJSON('https://graph.facebook.com/' +  id + '?fields=description,name,members.limit(5).fields(picture.width(211).height(151))&access_token=' + accessToken, function(data){
+                   $.getJSON('https://graph.facebook.com/' +  id + '?fields=description,name,members.fields(name,picture.width(211).height(151))&access_token=' + accessToken, function(data){
                             
                       var html = '<ul class="thumbnails">'
                       var members = data['members']['data'];
@@ -119,8 +119,20 @@ function getGroups(){
                         if (linkdata.bookmarks[i].id == data.id){
                           var child = linkdata.bookmarks[i].children.sort(compareLinks);
                           for (var j = 0; j < child.length; j++){
-                            html += '<a href=\"' + child[j].url + '\">'+ child[j].title + '</a><br>'
-                            console.log(child[j].url);
+                            var username = '';
+                            var user_id = '';
+                            for( var z = 0 ; z < members.length; z++){
+                              console.log(members[z]);
+                               if (members[z].id==child[j].owner){
+                                  console.log("entrou");
+                                  username = members[z].name;
+                                  console.log(members[z]);
+                                  user_id = members[z].id;
+                                 }
+                            }
+                            html += '<a href=\"' + child[j].url + '\">'+ child[j].title + 
+                            '</a> added by ' +  '<a href=\"https://facebook.com/' + user_id + '\">'+ username + '</a><hr>'
+                            +  '<br>';
                           }
                         
                         }
