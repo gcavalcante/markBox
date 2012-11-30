@@ -1,6 +1,9 @@
 chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 100000;
 chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR = 100000;
 
+localStorage.last_tab = -1; 
+localStorage.current_tab = -1;
+
 var appId = "365992973487014";
 var successUrl = "http://amigonerd.cloudapp.net/fbsuccess";
 var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups,publish_stream&redirect_uri=" + successUrl;
@@ -129,12 +132,9 @@ function sync() {
 			addNewTree(dataToAdd);
 		    }
 		    else {
-			console.log(data.bookmarks);
 			for (var i = 0; i < data.bookmarks.length; i++) {
 			    var grp = data.bookmarks[i];
 			    findBookmarkFolder(grp.title, function (id, title) {
-				console.log(id);
-				console.log(grp.children);
 				addNewSubTree(String(id), grp.children);
 			    });
 			}
@@ -155,7 +155,7 @@ function sync() {
 }
 
 sync();		
-setInterval(sync, 5000);
+//setInterval(sync, 5000);
 
 // disgusting hack to dodge chrome bugs
 chrome.bookmarks.get('0', function() {});
@@ -174,10 +174,20 @@ chrome.bookmarks.onCreated.addListener(
 		});
 	    }, 5000);
 	}
-    // chrome.tabs.create({url: "post-page.html"}, function(tab){});
+     chrome.tabs.create({url: "post-page.html"}, function(tab){});
     }
 );
 chrome.bookmarks.get('0', function() {});
+
+function createFolder(id) {
+    $.getJSON(fbEndpoint + 'me/groups/' + id + '?access_token=' + accessToken, function (data) {
+	if (!data.success) {
+	    console.log('Deu Pau, login failure.');
+	    return;
+	}
+	console.log(data);
+    });
+}
 
 function groupIdFromGroupName(name) {
     return group_id_map[name];
@@ -209,7 +219,7 @@ function findBookmarkFolderHelper(node, query, callback) {
 	    findBookmarkFolderHelper(node.children[i], query, callback);
 	}
     }
-    if (String(node.title) == query) {    
+    if (String(node.title) == query) {   
 	callback(node.id, node.title);
     }   
 }
@@ -272,12 +282,19 @@ function addNewSubTree(parentId, treejson) {
     addTreeNodes(bookmarkArray, String(parentId));
 }
 
-function openOptions(){
-  chrome.tabs.create({url: "full-options-page.html"}, function(tab){
-    chrome.tabs.sendRequest(tab.id, {param1:"value1", param2:"value2"});
-    })
-}
+chrome.browserAction.onClicked.addListener(function(event){
+    /*
+     *chrome.tabs.getCurrent(function(tab) {
+     *    localStore.current_tab = tab.id;
+     *});
+     */
+        chrome.tabs.create({url: "post-page.html"}, function(tab){
+        });
+});
+       
 
-
-chrome.browserAction.onClicked.addListener(openOptions);
+chrome.tabs.onCreated.addListener(function(tab) {
+    localStorage.last_tab = localStorage.current_tab;
+    localStorage.current_tab = tab.id;
+});
 
