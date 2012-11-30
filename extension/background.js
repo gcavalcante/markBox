@@ -5,7 +5,8 @@ chrome.tabs.create({url: "full-options-page.html"}, function(tab){
 var input = {'bookmarks': 
              [
                {'title': 'Shared Bookmarks',
-		'children': []
+		'children': [],
+		'index': 0 
                }
              ]
             };
@@ -14,8 +15,10 @@ var input = {'bookmarks':
 var facebook = new OAuth2('facebook', {
     client_id: '365992973487014',
     client_secret: '8a51d68b0e1337b14d0466ca235857dc',
-    api_scope: 'read_stream,user_likes'
+    api_scope: 'user_groups'
 });
+
+var topFolderID = -1;
 
 facebook.authorize(function() {
 
@@ -34,8 +37,16 @@ facebook.authorize(function() {
 		}
 		console.log(input)
 		//document.querySelector('#music').innerHTML = html;
-		findBookmarkFolder("Shared Bookmarks", mylog);
-		//addNewTree(input);
+		findBookmarkFolder("Shared Bookmarks", removeFolder);
+		$.post("http://markdrop.hp.af.cm/login", {access_token: facebook.getAccessToken()}, function (data) {
+		    if (!data.success) {
+			console.log('Deu Pau, login failure.');
+			return;
+		    }
+		    $.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
+			addNewTree(data);
+		    });
+		}, 'json');
 		return;
 
 	    } else {
@@ -49,7 +60,6 @@ facebook.authorize(function() {
     xhr.setRequestHeader('Authorization', 'OAuth ' + facebook.getAccessToken());
 
     xhr.send();
-
 });
 
 // Copyright (c) 2012 The Chromium Authors. All rights reserved.
@@ -85,9 +95,12 @@ function findBookmarkFolderHelper(node, query, callback) {
     }   
 }
 
-function mylog(id, title) {
-    console.log(id);
-    console.log(title);
+function set_folder_id(id, title) {
+    topFolderID = id;
+}
+
+function removeFolder(id, title) {
+    chrome.bookmarks.removeTree(String(id));    
 }
 
 // Traverse the bookmark tree, and print the folder and nodes.
