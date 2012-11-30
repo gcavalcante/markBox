@@ -53,8 +53,7 @@ function setupActions() {
  
 function getGroups(){
   if (chrome.extension.getBackgroundPage().groupsIsReady != true){
-    document.location.reload(true); 
-  
+    return;
   }
   var parsed = chrome.extension.getBackgroundPage().groups.sort(compare);
   if (!localStorage.hasOwnProperty('markBox')){
