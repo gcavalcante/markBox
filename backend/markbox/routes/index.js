@@ -33,9 +33,8 @@ var revision_id = 0;
  * GET home page.
  */
 
- var db = require('mongodb'),
- request = require('request'),
- ObjectID = db.ObjectID;
+var request = require('request'),
+ObjectID = require('mongodb').ObjectID;
 
 
  function requireLogin(req, res){
@@ -83,6 +82,8 @@ exports.add_bookmark = function(req, res){
   if(!req.body.url || !req.body.group_id || !req.body.title)
     return res.json({ success: false, error: "Missing fields"});
 
+  var db = require('mongodb');
+
   db.connect(mongourl, function(err, conn){
     if(err)
       return res.json({ success: false, error: err });
@@ -117,6 +118,8 @@ exports.delete_bookmark = function(req, res){
 
   if(!req.body.id)
     return res.json({ success: false, error: "Missing fields"});
+
+  var db = require('mongodb');
 
   db.connect(mongourl, function(err, conn){
     if(err)
@@ -171,6 +174,8 @@ exports.user_links = function(req, res){
     }
 
     var bookmarks_by_group = {};
+
+    var db = require('mongodb');
 
     db.connect(mongourl, function(err, conn){
       if(err)
@@ -269,6 +274,8 @@ exports.user_linklist = function(req, res){
 
     var bookmarks_by_group = {};
 
+    var db = require('mongodb');
+
     db.connect(mongourl, function(err, conn){
       if(err)
         return res.json({ success: false, error: err, message: "Error while connecting to MongoDB" });
@@ -362,6 +369,8 @@ exports.user_sync = function(req, res){
     }
 
     var output = {};
+
+    var db = require('mongodb');
 
     db.connect(mongourl, function(err, conn){
       if(err)
