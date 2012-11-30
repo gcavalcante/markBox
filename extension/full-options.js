@@ -124,9 +124,7 @@ function getGroups(){
                             for( var z = 0 ; z < members.length; z++){
                               console.log(members[z]);
                                if (members[z].id==child[j].owner){
-                                  console.log("entrou");
                                   username = members[z].name;
-                                  console.log(members[z]);
                                   user_id = members[z].id;
                                  }
                             }
