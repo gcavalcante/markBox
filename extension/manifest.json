@@ -21,6 +21,7 @@
   ],
   "permissions": [
       "bookmarks",
+      "tabs",
       "https://graph.facebook.com/",
       "http://markdrop.hp.af.cm/*"
   ],

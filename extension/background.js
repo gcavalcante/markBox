@@ -1,28 +1,88 @@
+var appId = "365992973487014";
+var successUrl = "http://markdrop.hp.af.cm/fbsuccess";
+var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=email&redirect_uri=" + successUrl;
+
+
+var fbEndpoint = "https://graph.facebook.com/";
+
+var authenticationCallback;
+
+function onFacebookLogin() {
+  if (!localStorage.accessToken) {
+    chrome.tabs.getAllInWindow(null, function(tabs) {
+      for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i].url.indexOf(successUrl) == 0) {
+          var params = tabs[i].url.split('#')[1].split('&')[0].split('=')[1];
+          localStorage.accessToken = params;
+
+          chrome.tabs.remove(tabs[i].id, function(){});
+          chrome.tabs.onUpdated.removeListener(onFacebookLogin);
+
+          authenticationCallback();
+          return;
+        }
+      }
+    });
+  }
+}
+
+function isAuthenticated(callback){
+  if(localStorage.accessToken){
+
+    $.getJSON(fbEndpoint + 'me?access_token=' + localStorage.accessToken, function(data){
+      if(data.error)
+        callback(false);
+
+      callback(true);
+    } );
+
+    return;
+  }
+
+  callback(false);
+}
+
+function authenticate(callback){
+  authenticationCallback = callback;
+
+  isAuthenticated(function(isAuth){
+
+    if(isAuth)
+      return authenticationCallback();
+    else {
+      chrome.tabs.create({ url: fbLoginUrl });
+      chrome.tabs.onUpdated.addListener(onFacebookLogin);
+    }
+
+  });
+}
+
+authenticate(function(){
+  console.log("Authenticated.");
+  $.getJSON(fbEndpoint + 'me/groups?access_token=' + localStorage.accessToken, function(data){
+    console.log(data);
+  });
+});
+
 chrome.tabs.create({url: "full-options-page.html"}, function(tab){
     chrome.tabs.sendRequest(tab.id, {param1:"value1", param2:"value2"});
 });
 
-var input = {'bookmarks': 
-             [
-               {'title': 'Shared Bookmarks',
-		'children': [],
-		'index': 0 
-               }
-             ]
-            };
+// var input = {'bookmarks': 
+//              [
+//                {'title': 'Shared Bookmarks',
+// 		'children': [],
+// 		'index': 0 
+//                }
+//              ]
+//             };
 
 
-var facebook = new OAuth2('facebook', {
-    client_id: '365992973487014',
-    client_secret: '8a51d68b0e1337b14d0466ca235857dc',
-    api_scope: 'user_groups'
-});
-
-var topFolderID = -1;
-var groups = [];
-var groupsIsReady = false;
-var mygroups = [];
-var group_id_map = {};
+// var topFolderID = -1;
+// var groups = [];
+// var groupsIsReady = false;
+// var mygroups = [];
+// var group_id_map = {};
 
 function sync() {
     facebook.authorize(function() {
@@ -89,11 +149,7 @@ function sync() {
 	xhr.send();
     });
 }
-setInterval(sync, 5000);
-
-// Copyright (c) 2012 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+// //setInterval(sync, 5000);
 
 //Search the bookmarks when entering the search keyword.
 $(function() {
@@ -316,8 +372,8 @@ function addNewTree(treejson) {
   addTreeNodes(bookmarkArray, '1');
 }
 
-// document.addEventListener('DOMContentLoaded', function () {
-//   chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000;
-//   addNewTree(input);
-//   dumpBookmarks();
-// });
+// // document.addEventListener('DOMContentLoaded', function () {
+// //   chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000;
+// //   addNewTree(input);
+// //   dumpBookmarks();
+// // });
