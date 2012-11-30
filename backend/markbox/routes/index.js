@@ -318,7 +318,8 @@ exports.user_linklist = function(req, res){
               var cbook = bookmarks_by_group[group].bookmarks[i];
               var cbook_tree = {
                 title: cbook.title,
-                url: cbook.url
+                url: cbook.url,
+                owner: cbook.owner
               }
 
               cgroup.children.push(cbook_tree);
