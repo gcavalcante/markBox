@@ -37,8 +37,8 @@ function isAuthenticated(callback){
         callback(false);
 
       callback(true);
-    } );
-
+    } ).error(function(){ alert('wut');  callback(false); });
+ 
     return;
   }
 
@@ -74,7 +74,7 @@ function sync() {
 	groups = [];
 	mygroups = [];
 	
-	$.getJSON(fbEndpoint + 'me/groups?access_token=' + localStorage.accessToken, function(data){
+	$.getJSON(fbEndpoint + 'me/groups?access_token=' + accessToken, function(data){
 	    for (var i = 0; i < data.data.length; i++) {
 		mygroups.push(String(data.data[i].id));
 		group_id_map[data.data[i].name] = data.data[i].id
