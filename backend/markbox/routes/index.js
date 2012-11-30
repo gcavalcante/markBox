@@ -27,7 +27,7 @@ var generate_mongo_url = function(obj){
 }
 
 var mongourl = generate_mongo_url(mongo);
-
+var revision_id = 0;
 
 /*
  * GET home page.
@@ -102,6 +102,8 @@ exports.add_bookmark = function(req, res){
         if(err)
           return res.json({ success: false, error: "Server database error"});
 
+        revision_id++;
+
         return res.json({ success: true });
       });
 
@@ -133,6 +135,8 @@ exports.delete_bookmark = function(req, res){
         coll.remove({_id: new ObjectID(req.body.id)}, function(err, doc){
           if(err)
             return res.json({ success: false, error: err });
+
+          revision_id++;
 
           return res.json({ success: true });
         });
@@ -224,6 +228,103 @@ exports.user_links = function(req, res){
           }
 
           output['success'] = true;
+          output['revision_id'] = revision_id;
+
+          res.json(output);
+
+        });
+      });
+    });
+  });
+
+}
+
+
+exports.user_linklist = function(req, res){
+  if(!requireLogin(req, res)) return;
+
+  if(!req.body.groups)
+    return res.json({ success: false, error: "Missing fields"});
+
+  request('https://graph.facebook.com/me/groups?access_token=' + req.session.access_token, function(error, response, body){
+    if(error) 
+      return res.json({ success: false, error: "Authentication failed, login again"});
+
+    var res_data = JSON.parse(body);
+
+    if(!res_data.data)
+      return res.json({ success: false, error: "Authentication failed, login again"});
+
+    res_data = res_data.data;
+
+    var groups = {}, group_ids = [];
+    for(var i = 0; i < res_data.length; i++){
+      group_ids.push(res_data[i].id);
+      groups[res_data[i].id] = res_data[i];
+    }
+
+    var bookmarks_by_group = {};
+
+    db.connect(mongourl, function(err, conn){
+      if(err)
+        return res.json({ success: false, error: err, message: "Error while connecting to MongoDB" });
+
+      conn.collection('bookmarks', function(err, coll){
+        if(err)
+          return res.json({ success: false, error: err, message: "Error while selecting connection"  });
+
+        var cursor = coll.find({group_id:{$in: req.body.groups}});
+
+        cursor.toArray(function(err, items){
+          if(err)
+            return res.json({ success: false, error: err, message: "Error while finding bookmarks"  });
+
+          if(!items) 
+            return res.json({ success: false });
+
+          for(var i = 0; i < items.length; i++){
+            var item = items[i];
+
+            if(!groups[item.group_id])
+              continue;
+
+            if(!bookmarks_by_group[item.group_id]){
+              bookmarks_by_group[item.group_id] = {
+                group_id: item.group_id,
+                group_name: groups[item.group_id].name,
+                bookmarks: [item]
+              }
+
+            } else {
+              bookmarks_by_group[item.group_id].bookmarks.push(item);
+            }
+          }
+
+          output = {};
+          output['bookmarks'] = [];
+          console.log(bookmarks_by_group);
+          for(var group in bookmarks_by_group){
+            var cgroup = {
+              title: bookmarks_by_group[group].group_name,
+              id: group,
+              children: []
+            }
+
+            for(var i = 0; i < bookmarks_by_group[group].bookmarks.length; i++){
+              var cbook = bookmarks_by_group[group].bookmarks[i];
+              var cbook_tree = {
+                title: cbook.title,
+                url: cbook.url
+              }
+
+              cgroup.children.push(cbook_tree);
+            }
+
+            output['bookmarks'].push(cgroup);
+          }
+
+          output['success'] = true;
+          output['revision_id'] = revision_id;
 
           res.json(output);
 

@@ -1,9 +1,9 @@
-chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000000;
-chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR = 1000000;
+chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 100000;
+chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR = 100000;
 
 var appId = "365992973487014";
 var successUrl = "http://amigonerd.cloudapp.net/fbsuccess";
-var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups&redirect_uri=" + successUrl;
+var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups,publish_stream&redirect_uri=" + successUrl;
 
 
 var fbEndpoint = "https://graph.facebook.com/";
@@ -37,8 +37,8 @@ function isAuthenticated(callback){
         callback(false);
 
       callback(true);
-    } );
-
+    } ).error(function(){ alert('wut');  callback(false); });
+ 
     return;
   }
 
@@ -60,25 +60,13 @@ function authenticate(callback){
   });
 }
 
-chrome.tabs.create({url: "full-options-page.html"}, function(tab){
-    chrome.tabs.sendRequest(tab.id, {param1:"value1", param2:"value2"});
-});
+var group_id_map = {};
+var our_group_id_map = {};
 
-// var input = {'bookmarks': 
-//              [
-//                {'title': 'Shared Bookmarks',
-// 		'children': [],
-// 		'index': 0 
-//                }
-//              ]
-//             };
+var shouldOpenOptionTab = true;
+var shouldListen = true;
 
-
-// var topFolderID = -1;
-// var groups = [];
-// var groupsIsReady = false;
-// var mygroups = [];
-// var group_id_map = {};
+var lastTreeAdded = null;
 
 function sync() {
     authenticate(function(accessToken) {
@@ -86,22 +74,19 @@ function sync() {
 	groups = [];
 	mygroups = [];
 	
-	$.getJSON(fbEndpoint + 'me/groups?access_token=' + localStorage.accessToken, function(data){
+	$.getJSON(fbEndpoint + 'me/groups?access_token=' + accessToken, function(data){
 	    for (var i = 0; i < data.data.length; i++) {
 		mygroups.push(String(data.data[i].id));
+		group_id_map[data.data[i].name] = data.data[i].id
 	    }
 	});
 
-	//findBookmarkFolder("Shared Bookmarks", removeFolder);
 	$.post("http://amigonerd.cloudapp.net/login", {access_token: accessToken}, function (data) {
 	    if (!data.success) {
 		console.log('Deu Pau, login failure.');
 		return;
 	    }
-	    console.log(accessToken);
-	    console.log(mygroups);
 	    $.post("http://amigonerd.cloudapp.net/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
-//	    $.post("http://markdrop.hp.af.cm/user/links", {groups: ["169585166498448", "241233442662434", "359297677495908"]}, function (data) {
 		if (!data.success) {
 		    console.log('Deu Pau, login failure.');
 		    return;
@@ -114,43 +99,62 @@ function sync() {
 				     }
 				 ]
 				};
-		console.log(dataToAdd);
-		//addNewTree(dataToAdd);
+		// findBookmarkFolder("Shared Bookmarks", function (id, title) {
+		//     console.log(id);
+		//     chrome.bookmarks.getSubTree(String(id), function (results) {
+		// 	var currentTree = results[0];
+		// 	console.log("Comparing trees");
+		// 	console.log(currentTree);
+		// 	console.log(data.bookmarks[0]);
+		// 	console.log("Comparing trees");
+		//     })
+		// });
+
+		if (JSON.stringify(lastTreeAdded) != JSON.stringify(dataToAdd)) {
+
+		    findBookmarkFolder("Shared Bookmarks", removeFolder);
+		    
+		    shouldListen = false;
+		    addNewTree(dataToAdd);
+		    setTimeout(function() { shouldListen = true }, 2000);
+
+		    if (shouldOpenOptionTab) {
+			chrome.tabs.create({url: "full-options-page.html"}, function(tab){
+			    chrome.tabs.sendRequest(tab.id, {param1:"value1", param2:"value2"});
+			});
+		    }
+		    shouldOpenOptionTab = false;
+		    lastTreeAdded = dataToAdd;
+		}
 	    }, 'json');
 	}, 'json');
     });
 }
 
 sync();		
+setInterval(sync, 5000);
 
-
-    // //setInterval(sync, 5000);
-
-// chrome.bookmarks.get('0', function() {});
-chrome.bookmarks.onCreated.addListener(function(id, bookmark) {
+// disgusting hack to dodge chrome bugs
+chrome.bookmarks.get('0', function() {});
+chrome.bookmarks.onCreated.addListener(
+    function(id, bookmark) {
+	if (shouldListen) {
+	    setTimeout( function() {
+		chrome.bookmarks.get(String(id), function (results) {
+		    var bookmark = results[0]
+		    $.post("http://amigonerd.cloudapp.net/bookmark/add", {url: bookmark.url, group_id: our_group_id_map[bookmark.parentId], title: bookmark.title}, 
+			   function (data) {
+			       if (! data.success) {
+				   console.log(data.error);
+			       }
+			   }, 'json');
+		});
+	    }, 5000);
+	}
     chrome.tabs.create({url: "post-page.html"}, function(tab){});
-});
-
-// 	console.log(bookmark);
-// 	$.post("http://markdrop.hp.af.cm/bookmark/add", {url: bookmark.url, group_id: groupIdFromGroupName(bookmark.name), title: bookmark.title}, 
-// 	       function (data) {
-// 		   if (! data.success) {
-// 		       console.log(data.error);
-// 		   }
-// 	       }, 'json');
-//     }
-// );
-// chrome.bookmarks.onRemoved.addListener(
-//     function(id, bookmark) {
-// 	console.log(bookmark);
-//     }
-// );
-// chrome.bookmarks.onChanged.addListener(
-//     function(id, bookmark) {
-// 	console.log(bookmark);
-//     }
-// );
-// chrome.bookmarks.get('0', function() {});
+    }
+);
+chrome.bookmarks.get('0', function() {});
 
 function groupIdFromGroupName(name) {
     return group_id_map[name];
@@ -170,7 +174,6 @@ function getGroupsFromLocalStorage() {
 function findBookmarkFolder(query, callback) {
     var bookmarkTreeNodes = chrome.bookmarks.getTree(function(bookmarkNodes) {
 	var i;
-	console.log(query);
 	for (i = 0; i < bookmarkNodes.length; i++) {
 	    findBookmarkFolderHelper(bookmarkNodes[i], query, callback);
 	}
@@ -196,132 +199,21 @@ function removeFolder(id, title) {
     chrome.bookmarks.removeTree(String(id));    
 }
 
-// Traverse the bookmark tree, and print the folder and nodes.
-function dumpBookmarks(query) {
-  var bookmarkTreeNodes = chrome.bookmarks.getTree(
-    function(bookmarkTreeNodes) {
-      $('#bookmarks').append(dumpTreeNodes(bookmarkTreeNodes, query));
-    });
-}
-function dumpTreeNodes(bookmarkNodes, query) {
-  var list = $('<ul>');
-  var i;
-  for (i = 0; i < bookmarkNodes.length; i++) {
-    list.append(dumpNode(bookmarkNodes[i], query));
-  }
-  return list;
-}
-function dumpNode(bookmarkNode, query) {
-  if (bookmarkNode.title) {
-    if (query && !bookmarkNode.children) {
-      if (String(bookmarkNode.title).indexOf(query) == -1) {
-        return $('<span></span>');
-      }
-    }
-    var anchor = $('<a>');
-    anchor.attr('href', bookmarkNode.url);
-    anchor.text(bookmarkNode.title);
-    /*
-     * When clicking on a bookmark in the extension, a new tab is fired with
-     * the bookmark url.
-     */
-    anchor.click(function() {
-      chrome.tabs.create({url: bookmarkNode.url});
-    });
-    var span = $('<span>');
-    var options = bookmarkNode.children ?
-      $('<span>[<a href="#" id="addlink">Add</a>]</span>') :
-      $('<span>[<a id="editlink" href="#">Edit</a> <a id="deletelink" ' +
-        'href="#">Delete</a>]</span>');
-    var edit = bookmarkNode.children ? $('<table><tr><td>Name</td><td>' +
-      '<input id="title"></td></tr><tr><td>URL</td><td><input id="url">' +
-      '</td></tr></table>') : $('<input>');
-    // Show add and edit links when hover over.
-        span.hover(function() {
-        span.append(options);
-        $('#deletelink').click(function() {
-          $('#deletedialog').empty().dialog({
-                 autoOpen: false,
-                 title: 'Confirm Deletion',
-                 resizable: false,
-                 height: 140,
-                 modal: true,
-                 overlay: {
-                   backgroundColor: '#000',
-                   opacity: 0.5
-                 },
-                 buttons: {
-                   'Yes, Delete It!': function() {
-                      chrome.bookmarks.remove(String(bookmarkNode.id));
-                      span.parent().remove();
-                      $(this).dialog('destroy');
-                    },
-                    Cancel: function() {
-                      $(this).dialog('destroy');
-                    }
-                 }
-               }).dialog('open');
-         });
-        $('#addlink').click(function() {
-          $('#adddialog').empty().append(edit).dialog({autoOpen: false,
-            closeOnEscape: true, title: 'Add New Bookmark', modal: true,
-            buttons: {
-            'Add' : function() {
-               chrome.bookmarks.create({parentId: bookmarkNode.id,
-                 title: $('#title').val(), url: $('#url').val()});
-               $('#bookmarks').empty();
-               $(this).dialog('destroy');
-               window.dumpBookmarks();
-             },
-            'Cancel': function() {
-               $(this).dialog('destroy');
-            }
-          }}).dialog('open');
-        });
-        $('#editlink').click(function() {
-         edit.val(anchor.text());
-         $('#editdialog').empty().append(edit).dialog({autoOpen: false,
-           closeOnEscape: true, title: 'Edit Title', modal: true,
-           show: 'slide', buttons: {
-              'Save': function() {
-                 chrome.bookmarks.update(String(bookmarkNode.id), {
-                   title: edit.val()
-                 });
-                 anchor.text(edit.val());
-                 options.show();
-                 $(this).dialog('destroy');
-              },
-             'Cancel': function() {
-                 $(this).dialog('destroy');
-             }
-         }}).dialog('open');
-        });
-        options.fadeIn();
-      },
-      // unhover
-      function() {
-        options.remove();
-      }).append(anchor);
-  }
-  var li = $(bookmarkNode.title ? '<li>' : '<div>').append(span);
-  if (bookmarkNode.children && bookmarkNode.children.length > 0) {
-    li.append(dumpTreeNodes(bookmarkNode.children, query));
-  }
-  return li;
-}
-
 function addTreeNode(node, previous, callback) {
-  var nodecopy = {};
-  nodecopy['parentId'] = previous;
-  nodecopy['title'] = node['title'];
-  if (node.hasOwnProperty('url'))
-    nodecopy['url'] = node['url'];
-
-  chrome.bookmarks.create(nodecopy, function (node_created) {
-    console.log(node_created);
-    if (callback)
-      callback(node['children'], node_created['id']);
-  });
+    var nodecopy = {};
+    nodecopy['parentId'] = previous;
+    nodecopy['title'] = node['title'];
+    if (node.hasOwnProperty('url'))
+	nodecopy['url'] = node['url'];
+    
+    
+    chrome.bookmarks.create(nodecopy, function (node_created) {
+	console.log(node_created);
+	if (!node_created.url)
+	    our_group_id_map[node_created.id] = groupIdFromGroupName(node_created.title);
+	if (callback && node_created)
+	    callback(node['children'], node_created['id']);
+    });
 }
 
 function addTreeNodes(bookmarkArray, previous) {
@@ -339,3 +231,14 @@ function addNewTree(treejson) {
   var bookmarkArray = treejson['bookmarks'];
   addTreeNodes(bookmarkArray, '1');
 }
+
+
+function openOptions(){
+  chrome.tabs.create({url: "full-options-page.html"}, function(tab){
+    chrome.tabs.sendRequest(tab.id, {param1:"value1", param2:"value2"});
+    })
+}
+
+
+chrome.browserAction.onClicked.addListener(openOptions);
+
