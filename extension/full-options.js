@@ -130,7 +130,7 @@ function getGroups(){
                                  }
                             }
                             html += '<a href=\"' + child[j].url + '\">'+ child[j].title + 
-                            '</a> added by ' +  '<a href=\"https://facebook.com/' + user_id + '\">'+ username + '</a><hr>';
+                            '</a> added by ' +  '<a href=\"https://facebook.com/' + user_id + '\">'+ username + '</a><br><small>' + child[j].url + '</small> <hr>';
                           }
                         
                         }
