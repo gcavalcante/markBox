@@ -14,20 +14,7 @@
  * limitations under the License.
  */
 
-var input = {'bookmarks': 
-             [
-               {'title': 'Shared Bookmarks',
-		'children': []
-               }
-             ]
-            };
 
-
-var facebook = new OAuth2('facebook', {
-    client_id: '365992973487014',
-    client_secret: '8a51d68b0e1337b14d0466ca235857dc',
-    api_scope: 'read_stream,user_likes'
-});
 facebook.authorize(function() {
 
     // Make an XHR that creates the task
