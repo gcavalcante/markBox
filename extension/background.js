@@ -35,13 +35,14 @@ function sync() {
 		    // Great success: parse response with JSON
 		    var parsed = JSON.parse(xhr.responseText);
 		    var html = '';
+		    groups = [];
+		    mygroups = [];
+
 		    for (var i = 0; i < parsed.data.length; i++) {
 			html += '<li>' + parsed.data[i].name + '</li>';
 			console.log(parsed.data[i]);
 			input['bookmarks'][0]['children'].push({'childen':[], 'title': parsed.data[i].name});
-			groups = [];
 			groups.push(parsed.data[i]);
-			mygroups = [];
 			mygroups.push(String(parsed.data[i].id));
 			group_id_map[parsed.data[i].name] = String(parsed.data[i].id);
 		    }
@@ -88,7 +89,7 @@ function sync() {
 	xhr.send();
     });
 }
-setInterval(sync, 50000);
+setInterval(sync, 5000);
 
 // Copyright (c) 2012 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
