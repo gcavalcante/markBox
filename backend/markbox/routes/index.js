@@ -27,7 +27,7 @@ var generate_mongo_url = function(obj){
 }
 
 var mongourl = generate_mongo_url(mongo);
-
+var revision_id = 0;
 
 /*
  * GET home page.
@@ -102,6 +102,8 @@ exports.add_bookmark = function(req, res){
         if(err)
           return res.json({ success: false, error: "Server database error"});
 
+        revision_id++;
+
         return res.json({ success: true });
       });
 
@@ -133,6 +135,8 @@ exports.delete_bookmark = function(req, res){
         coll.remove({_id: new ObjectID(req.body.id)}, function(err, doc){
           if(err)
             return res.json({ success: false, error: err });
+
+          revision_id++;
 
           return res.json({ success: true });
         });
@@ -224,6 +228,7 @@ exports.user_links = function(req, res){
           }
 
           output['success'] = true;
+          output['revision_id'] = revision_id;
 
           res.json(output);
 
@@ -319,6 +324,7 @@ exports.user_linklist = function(req, res){
           }
 
           output['success'] = true;
+          output['revision_id'] = revision_id;
 
           res.json(output);
 
