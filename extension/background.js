@@ -2,11 +2,11 @@ chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000000;
 chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR = 1000000;
 
 var appId = "365992973487014";
-var successUrl = "http://markdrop.hp.af.cm/fbsuccess";
+var successUrl = "http://amigonerd.cloudapp.net/fbsuccess";
 var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups&redirect_uri=" + successUrl;
 
 
-var fbEndpoint = "https://amigonerd.cloudapp.net/";
+var fbEndpoint = "https://graph.facebook.com/";
 
 var authenticationCallback;
 
