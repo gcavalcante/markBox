@@ -12,13 +12,15 @@ var express = require('express')
 var app = express();
 
 app.configure(function(){
-  app.set('port', process.env.PORT || 3000);
+  app.set('port', process.env.VCAP_APP_PORT || process.env.PORT || 3000);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'ejs');
+  app.use(express.bodyParser());
   app.use(express.favicon());
   app.use(express.logger('dev'));
-  app.use(express.bodyParser());
   app.use(express.methodOverride());
+  app.use(express.cookieParser('iluhafdshuladsfhliuafsd'));
+  app.use(express.session());
   app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
 });
@@ -28,6 +30,10 @@ app.configure('development', function(){
 });
 
 app.get('/', routes.index);
+app.post('/login', routes.login);
+app.get('/user/sync', routes.user_sync);
+app.post('/bookmarks/add', routes.add_bookmark);
+
 app.get('/users', user.list);
 
 http.createServer(app).listen(app.get('port'), function(){
