@@ -48,7 +48,7 @@ var mongourl = generate_mongo_url(mongo);
 }
 
 exports.index = function(req, res){
-  res.render('index', { title: 'Express' });
+  res.render('index', { title: 'markBox' });
 };
 
 exports.login = function(req, res){
@@ -76,7 +76,7 @@ exports.login = function(req, res){
 exports.add_bookmark = function(req, res){
   if(!requireLogin(req, res)) return;
 
-  if(!req.body.url || !req.body.group_id)
+  if(!req.body.url || !req.body.group_id || !req.body.title)
     return res.json({ success: false, error: "Missing fields"});
 
   db.connect(mongourl, function(err, conn){
@@ -89,6 +89,7 @@ exports.add_bookmark = function(req, res){
 
       var bookmark = {
         url: req.body.url,
+        title: req.body.title,
         group_id: req.body.group_id,
         owner: req.session.user_id
       };
@@ -96,7 +97,7 @@ exports.add_bookmark = function(req, res){
       coll.insert(bookmark, {safe: true}, function(err){
         if(err)
           return res.json({ success: false, error: "Server database error"});
-        
+
         return res.json({ success: true });
       });
 
@@ -134,6 +135,97 @@ exports.delete_bookmark = function(req, res){
       });
     });
   });
+}
+
+exports.user_links = function(req, res){
+  if(!requireLogin(req, res)) return;
+
+  if(!req.body.groups)
+    return res.json({ success: false, error: "Missing fields"});
+
+  request('https://graph.facebook.com/me/groups?access_token=' + req.session.access_token, function(error, response, body){
+    if(error) 
+      return res.json({ success: false, error: "Authentication failed, login again"});
+
+    var res_data = JSON.parse(body);
+
+    if(!res_data.data)
+      return res.json({ success: false, error: "Authentication failed, login again"});
+
+    res_data = res_data.data;
+
+    var groups = {}, group_ids = [];
+    for(var i = 0; i < res_data.length; i++){
+      group_ids.push(res_data[i].id);
+      groups[res_data[i].id] = res_data[i];
+    }
+
+    var bookmarks_by_group = {};
+
+    db.connect(mongourl, function(err, conn){
+      if(err)
+        return res.json({ success: false, error: err });
+
+      conn.collection('bookmarks', function(err, coll){
+        if(err)
+          return res.json({ success: false, error: err });
+
+        var cursor = coll.find({group_id:{$in: req.body.groups}});
+
+        cursor.toArray(function(err, items){
+          if(err)
+            return res.json({ success: false, error: err });
+
+          if(!items) 
+            return res.json({ success: false });
+
+          for(var i = 0; i < items.length; i++){
+            var item = items[i];
+
+            if(!groups[item.group_id])
+              continue;
+
+            if(!bookmarks_by_group[item.group_id]){
+              bookmarks_by_group[item.group_id] = {
+                group_id: item.group_id,
+                group_name: groups[item.group_id].name,
+                bookmarks: [item]
+              }
+
+            } else {
+              bookmarks_by_group[item.group_id].bookmarks.push(item);
+            }
+          }
+
+          output = {};
+          output['bookmarks'] = [];
+          console.log(bookmarks_by_group);
+          for(var group in bookmarks_by_group){
+            var cgroup = {
+              title: bookmarks_by_group[group].group_name,
+              children: []
+            }
+
+            for(var i = 0; i < bookmarks_by_group[group].bookmarks.length; i++){
+              var cbook = bookmarks_by_group[group].bookmarks[i];
+              var cbook_tree = {
+                title: cbook.title,
+                url: cbook.url
+              }
+
+              cgroup.children.push(cbook_tree);
+            }
+
+            output['bookmarks'].push(cgroup);
+          }
+
+          res.json(output);
+
+        });
+      });
+    });
+  });
+
 }
 
 exports.user_sync = function(req, res){
