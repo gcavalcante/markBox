@@ -169,7 +169,9 @@ chrome.bookmarks.onCreated.addListener(
 			   function (data) {
 			       if (! data.success) {
 				   console.log(data.error);
+				   return;
 			       }
+			       currentUrls[bookmark.title] = true;
 			   }, 'json');
 		});
 	    }, 5000);
@@ -181,13 +183,34 @@ chrome.bookmarks.onCreated.addListener(
 );
 chrome.bookmarks.get('0', function() {});
 
-function createFolder(id) {
-    $.getJSON(fbEndpoint + 'me/groups/' + id + '?access_token=' + accessToken, function (data) {
-	if (!data.success) {
-	    console.log('Deu Pau, login failure.');
-	    return;
+function createFolders(idList) {
+    console.log(idList);
+    authenticate(function(accessToken) {
+	for (var i = 0; i < idList.length; i++) {
+	    console.log(idList[i]);
+	    $.getJSON(fbEndpoint + idList[i] + '?access_token=' + accessToken, function (data) {
+		if (data.error) {
+		    console.log('Deu Pau, login failure.');
+		    return;
+		}
+		console.log(data);
+		findBookmarkFolder("Shared Bookmarks", function (id, title) {
+		    var newFolder = {};
+		    newFolder['parentId'] = String(id);
+		    newFolder['title'] = data.name;
+		    if(currentUrls[newFolder['title']])
+			return;
+		    chrome.bookmarks.create(newFolder, function (node_created) {
+			console.log("New folder:");
+			console.log(newFolder);
+			our_group_id_map[node_created.id] = groupIdFromGroupName(node_created.title);
+			currentUrls[newFolder['title']] = true;
+		    });
+		    currentUrls[newFolder['title']] = true;
+
+		});
+	    });
 	}
-	console.log(data);
     });
 }
 
@@ -243,23 +266,28 @@ function addTreeNode(node, previous, callback) {
 	
 	if(currentUrls[node['url']])
             return;
+	if(currentUrls[node['title']])
+            return;
 	if(currentUrls[previous] && currentUrls[previous][node['url']])
             return;
     }
     
     chrome.bookmarks.create(nodecopy, function (node_created) {
     	console.log(node_created);
-    	if (!node_created.url)
+    	if (!node_created.url) {
     	    our_group_id_map[node_created.id] = groupIdFromGroupName(node_created.title);
+	}
     	if (callback && node_created){
     	    callback(node['children'], node_created['id']);
             currentUrls[node['url']] = true;
+	    currentUrls[node['title']] = true;
             //currentUrls[previous][node['url']] = true;
         }
     });
     // if (!currentUrls[previous])
     // 	currentUrls[previous] = {};
     currentUrls[node['url']] = true;
+    currentUrls[node['title']] = true;
     //currentUrls[previous][node['url']] = true;
 }
 
