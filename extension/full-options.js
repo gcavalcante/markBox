@@ -47,8 +47,10 @@ function doSomething(event) {
       if (checkeds[i].checked){
         st.push(checkeds[i].id);
       }
-  }
+
+        }
   localStorage['markBox'] = JSON.stringify(st);
+  chrome.extension.getBackgroundPage().createFolders(st);
 
  }
 
@@ -122,15 +124,13 @@ function getGroups(){
                             var username = '';
                             var user_id = '';
                             for( var z = 0 ; z < members.length; z++){
-                              console.log(members[z]);
                                if (members[z].id==child[j].owner){
                                   username = members[z].name;
                                   user_id = members[z].id;
                                  }
                             }
                             html += '<a href=\"' + child[j].url + '\">'+ child[j].title + 
-                            '</a> added by ' +  '<a href=\"https://facebook.com/' + user_id + '\">'+ username + '</a><hr>'
-                            +  '<br>';
+                            '</a> added by ' +  '<a href=\"https://facebook.com/' + user_id + '\">'+ username + '</a><hr>';
                           }
                         
                         }
