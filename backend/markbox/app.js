@@ -32,6 +32,7 @@ app.configure('development', function(){
 app.get('/', routes.index);
 app.post('/login', routes.login);
 app.get('/user/sync', routes.user_sync);
+app.post('/user/links', routes.user_links);
 app.post('/bookmarks/add', routes.add_bookmark);
 app.post('/bookmarks/delete', routes.delete_bookmark);
 
