@@ -235,7 +235,7 @@ exports.user_links = function(req, res){
 }
 
 
-exports.user_links = function(req, res){
+exports.user_linklist = function(req, res){
   if(!requireLogin(req, res)) return;
 
   if(!req.body.groups)
