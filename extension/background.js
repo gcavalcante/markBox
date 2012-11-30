@@ -21,6 +21,8 @@ var facebook = new OAuth2('facebook', {
 var topFolderID = -1;
 var groups = [];
 var groupsIsReady = false;
+var mygroups = [];
+var group_id_map = {};
 
 facebook.authorize(function() {
 
@@ -37,6 +39,8 @@ facebook.authorize(function() {
 		    console.log(parsed.data[i]);
 		    input['bookmarks'][0]['children'].push({'childen':[], 'title': parsed.data[i].name});
 		    groups.push(parsed.data[i]);
+		    mygroups.push(String(parsed.data[i].id));
+		    group_id_map[parsed.data[i].name] = String(parsed.data[i].id);
 		}
 		groupsIsReady = true;
 		console.log(input);
@@ -47,9 +51,24 @@ facebook.authorize(function() {
 			console.log('Deu Pau, login failure.');
 			return;
 		    }
+		    console.log(facebook.getAccessToken());
+		    console.log(mygroups);
 		    $.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
-			addNewTree(data);
-		    });
+			if (!data.success) {
+			    console.log('Deu Pau, login failure.');
+			    return;
+			}
+			var dataToAdd = {'bookmarks': 
+					 [
+					     {'title': 'Shared Bookmarks',
+					      'children': data.bookmarks,
+					      'index': 0 
+					     }
+					 ]
+					};
+			console.log(dataToAdd);
+			addNewTree(dataToAdd);
+		    }, 'json');
 		}, 'json');
 		return;
 
@@ -77,6 +96,36 @@ $(function() {
      dumpBookmarks($('#search').val());
   });
 });
+
+chrome.bookmarks.get('0', function() {});
+
+chrome.bookmarks.onCreated.addListener(
+    function(id, bookmark) {
+	console.log(bookmark);
+	$.post("http://markdrop.hp.af.cm/bookmark/add", {url: bookmark.url, group_id: groupIdFromGroupName(bookmark.name), title: bookmark.title}, 
+	       function (data) {
+		   if (! data.success) {
+		       console.log(data.error);
+		   }
+	       }, 'json');
+    }
+);
+chrome.bookmarks.get('0', function() {});
+
+function groupIdFromGroupName(name) {
+    return group_id_map[name];
+}
+
+function getSharedBookmarks() {
+  var bookmarkTreeNodes = chrome.bookmarks.getTree(
+    function(bookmarkTreeNodes) {
+      $('#bookmarks').append(dumpTreeNodes(bookmarkTreeNodes, query));
+    });
+}
+
+function getGroupsFromLocalStorage() {
+    return mygroups;
+}
 
 function findBookmarkFolder(query, callback) {
     var bookmarkTreeNodes = chrome.bookmarks.getTree(function(bookmarkNodes) {
@@ -247,7 +296,7 @@ function addTreeNodes(bookmarkArray, previous) {
 }
 
 function addNewTree(treejson) {
-  var bookmarkArray = input['bookmarks'];
+  var bookmarkArray = treejson['bookmarks'];
   addTreeNodes(bookmarkArray, '1');
 }
 
