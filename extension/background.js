@@ -93,14 +93,14 @@ function sync() {
 	});
 
 	//findBookmarkFolder("Shared Bookmarks", removeFolder);
-	$.post("http://markdrop.hp.af.cm/login", {access_token: accessToken}, function (data) {
+	$.post("http://amigonerd.cloudapp.net/login", {access_token: accessToken}, function (data) {
 	    if (!data.success) {
 		console.log('Deu Pau, login failure.');
 		return;
 	    }
 	    console.log(accessToken);
 	    console.log(mygroups);
-	    $.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
+	    $.post("http://amigonerd.cloudapp.net/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
 //	    $.post("http://markdrop.hp.af.cm/user/links", {groups: ["169585166498448", "241233442662434", "359297677495908"]}, function (data) {
 		if (!data.success) {
 		    console.log('Deu Pau, login failure.');
