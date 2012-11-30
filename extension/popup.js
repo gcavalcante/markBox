@@ -45,7 +45,7 @@ facebook.authorize(function() {
 		}
 		console.log(input)
 		document.querySelector('#music').innerHTML = html;
-		findBookmarkFolder("Shared Bookmarks", callback);
+		findBookmarkFolder("Shared Bookmarks", mylog);
 		//addNewTree(input);
 		return;
 
@@ -77,8 +77,9 @@ $(function() {
 });
 
 function findBookmarkFolder(query, callback) {
-    var bookmarkTreeNodes = chrome.bookmarks.getTree(function(bookmarkTreeNodes, query, callback) {
+    var bookmarkTreeNodes = chrome.bookmarks.getTree(function(bookmarkNodes) {
 	var i;
+	console.log(query);
 	for (i = 0; i < bookmarkNodes.length; i++) {
 	    findBookmarkFolderHelper(bookmarkNodes[i], query, callback);
 	}
@@ -86,14 +87,14 @@ function findBookmarkFolder(query, callback) {
 }
 
 function findBookmarkFolderHelper(node, query, callback) {
-    if (String(bookmarkNode.title).indexOf(query) != -1) {    
-	callback(bookmarkNode.id, bookmarkNode.title);
-    }
     if (node.children) {
 	for (var i = 0; i < node.children.length; i++) {
 	    findBookmarkFolderHelper(node.children[i], query, callback);
 	}
     }
+    if (String(node.title).indexOf(query) != -1) {    
+	callback(node.id, node.title);
+    }   
 }
 
 function mylog(id, title) {
