@@ -38,7 +38,7 @@ function isAuthenticated(callback){
         callback(false);
 
       callback(true);
-    } ).error(function(){ alert('wut');  callback(false); });
+    } ).error(function{ callback(false); });
  
     return;
   }
