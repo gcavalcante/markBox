@@ -120,8 +120,8 @@ function sync() {
 		// });
 
 		console.log(dataToAdd);
-		if (JSON.stringify(lastTreeAdded) != JSON.stringify(dataToAdd)) {
-		    
+		if (lastTreeAdded != JSON.stringify(dataToAdd)) {
+		    console.log("New Links!");
 		    shouldListen = false;
 
 		    if (!lastTreeAdded) {
@@ -129,11 +129,15 @@ function sync() {
 			addNewTree(dataToAdd);
 		    }
 		    else {
-			findBookmarkFolder("Shared Bookmarks", function (id, title) {
-			    console.log(id);
-			    console.log(data.bookmarks);
-			    addNewSubTree(id, data.bookmarks);
-			});
+			console.log(data.bookmarks);
+			for (var i = 0; i < data.bookmarks.length; i++) {
+			    var grp = data.bookmarks[i];
+			    findBookmarkFolder(grp.title, function (id, title) {
+				console.log(id);
+				console.log(grp.children);
+				addNewSubTree(String(id), grp.children);
+			    });
+			}
 		    }
 		    setTimeout(function() { shouldListen = true }, 2000);
 
@@ -143,7 +147,7 @@ function sync() {
 			});
 		    }
 		    shouldOpenOptionTab = false;
-		    lastTreeAdded = dataToAdd;
+		    lastTreeAdded = JSON.stringify(dataToAdd);
 		}
 	    }, 'json');
 	}, 'json');
@@ -205,7 +209,7 @@ function findBookmarkFolderHelper(node, query, callback) {
 	    findBookmarkFolderHelper(node.children[i], query, callback);
 	}
     }
-    if (String(node.title).indexOf(query) != -1) {    
+    if (String(node.title) == query) {    
 	callback(node.id, node.title);
     }   
 }
