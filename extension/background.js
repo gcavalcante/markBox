@@ -38,7 +38,7 @@ function isAuthenticated(callback){
         callback(false);
 
       callback(true);
-    } ).error(function{ callback(false); });
+    } ).error(function(){ callback(false); });
  
     return;
   }
@@ -169,6 +169,7 @@ function getSharedBookmarks() {
 }
 
 function getGroupsFromLocalStorage() {
+    return JSON.parse(localStorage.markBox);
     return mygroups;
 }
 
