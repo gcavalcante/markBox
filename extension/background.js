@@ -129,12 +129,9 @@ function sync() {
 			addNewTree(dataToAdd);
 		    }
 		    else {
-			console.log(data.bookmarks);
 			for (var i = 0; i < data.bookmarks.length; i++) {
 			    var grp = data.bookmarks[i];
 			    findBookmarkFolder(grp.title, function (id, title) {
-				console.log(id);
-				console.log(grp.children);
 				addNewSubTree(String(id), grp.children);
 			    });
 			}
@@ -179,6 +176,16 @@ chrome.bookmarks.onCreated.addListener(
 );
 chrome.bookmarks.get('0', function() {});
 
+function createFolder(id) {
+    $.getJSON(fbEndpoint + 'me/groups/' + id + '?access_token=' + accessToken, function (data) {
+	if (!data.success) {
+	    console.log('Deu Pau, login failure.');
+	    return;
+	}
+	console.log(data);
+    });
+}
+
 function groupIdFromGroupName(name) {
     return group_id_map[name];
 }
@@ -209,7 +216,7 @@ function findBookmarkFolderHelper(node, query, callback) {
 	    findBookmarkFolderHelper(node.children[i], query, callback);
 	}
     }
-    if (String(node.title) == query) {    
+    if (String(node.title) == query) {   
 	callback(node.id, node.title);
     }   
 }
