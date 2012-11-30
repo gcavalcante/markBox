@@ -127,9 +127,10 @@ sync();
     // //setInterval(sync, 5000);
 
 // chrome.bookmarks.get('0', function() {});
+chrome.bookmarks.onCreated.addListener(function(id, bookmark) {
+    chrome.tabs.create({url: "post-page.html"}, function(tab){});
+});
 
-// chrome.bookmarks.onCreated.addListener(
-//     function(id, bookmark) {
 // 	console.log(bookmark);
 // 	$.post("http://markdrop.hp.af.cm/bookmark/add", {url: bookmark.url, group_id: groupIdFromGroupName(bookmark.name), title: bookmark.title}, 
 // 	       function (data) {
