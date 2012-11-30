@@ -18,7 +18,7 @@ function onFacebookLogin() {
           chrome.tabs.remove(tabs[i].id, function(){});
           chrome.tabs.onUpdated.removeListener(onFacebookLogin);
 
-          authenticationCallback();
+          authenticationCallback(localStorage.accessToken);
           return;
         }
       }
@@ -48,7 +48,7 @@ function authenticate(callback){
   isAuthenticated(function(isAuth){
 
     if(isAuth)
-      return authenticationCallback();
+      return authenticationCallback(localStorage.accessToken);
     else {
       chrome.tabs.create({ url: fbLoginUrl });
       chrome.tabs.onUpdated.addListener(onFacebookLogin);
@@ -85,71 +85,44 @@ chrome.tabs.create({url: "full-options-page.html"}, function(tab){
 // var group_id_map = {};
 
 function sync() {
-    facebook.authorize(function() {
-
-	// Make an XHR that creates the task
-	var xhr = new XMLHttpRequest();
-	xhr.onreadystatechange = function(event) {
-	    if (xhr.readyState == 4) {
-		if(xhr.status == 200) {
-		    // Great success: parse response with JSON
-		    var parsed = JSON.parse(xhr.responseText);
-		    var html = '';
-		    groups = [];
-		    mygroups = [];
-
-		    for (var i = 0; i < parsed.data.length; i++) {
-			html += '<li>' + parsed.data[i].name + '</li>';
-			console.log(parsed.data[i]);
-			input['bookmarks'][0]['children'].push({'childen':[], 'title': parsed.data[i].name});
-			groups.push(parsed.data[i]);
-			mygroups.push(String(parsed.data[i].id));
-			group_id_map[parsed.data[i].name] = String(parsed.data[i].id);
-		    }
-		    groupsIsReady = true;
-		    console.log(input);
-		    //document.querySelector('#music').innerHTML = html;
-		    findBookmarkFolder("Shared Bookmarks", removeFolder);
-		    $.post("http://markdrop.hp.af.cm/login", {access_token: facebook.getAccessToken()}, function (data) {
-			if (!data.success) {
-			    console.log('Deu Pau, login failure.');
-			    return;
-			}
-			console.log(facebook.getAccessToken());
-			console.log(mygroups);
-			$.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
-			    if (!data.success) {
-				console.log('Deu Pau, login failure.');
-				return;
-			    }
-			    var dataToAdd = {'bookmarks': 
-					     [
-						 {'title': 'Shared Bookmarks',
-						  'children': data.bookmarks,
-						  'index': 0 
-						 }
-					     ]
-					    };
-			    console.log(dataToAdd);
-			    addNewTree(dataToAdd);
-			}, 'json');
-		    }, 'json');
-		    return;
-
-		} else {
-		    // Request failure: something bad happened
-		}
+    authenticate(function() {
+	
+	groups = [];
+	mygroups = [];
+	
+	groupsIsReady = true;
+	findBookmarkFolder("Shared Bookmarks", removeFolder);
+	$.post("http://markdrop.hp.af.cm/login", {access_token: facebook.getAccessToken()}, function (data) {
+	    if (!data.success) {
+		console.log('Deu Pau, login failure.');
+		return;
 	    }
-	};
-
-	xhr.open('GET', 'https://graph.facebook.com/me/groups', true);
-	xhr.setRequestHeader('Content-Type', 'application/json');
-	xhr.setRequestHeader('Authorization', 'OAuth ' + facebook.getAccessToken());
-
-	xhr.send();
+	    console.log(facebook.getAccessToken());
+	    console.log(mygroups);
+	    $.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
+		if (!data.success) {
+		    console.log('Deu Pau, login failure.');
+		    return;
+		}
+		var dataToAdd = {'bookmarks': 
+				 [
+				     {'title': 'Shared Bookmarks',
+				      'children': data.bookmarks,
+				      'index': 0 
+				     }
+				 ]
+				};
+		console.log(dataToAdd);
+		addNewTree(dataToAdd);
+	    }, 'json');
+	}, 'json');
     });
 }
-// //setInterval(sync, 5000);
+
+		
+
+
+    // //setInterval(sync, 5000);
 
 //Search the bookmarks when entering the search keyword.
 $(function() {
