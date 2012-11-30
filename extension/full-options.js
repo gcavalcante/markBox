@@ -55,7 +55,6 @@ function getGroups(){
   var unsorted_groups = chrome.extension.getBackgroundPage().authenticate(function(accessToken){
     console.log("Authenticated.");
     $.getJSON('https://graph.facebook.com/me/groups?access_token=' + accessToken, function(data){
-      console.log(data);
 
   var parsed = data['data'].sort(compare);
   if (!localStorage.hasOwnProperty('markBox')){
@@ -82,12 +81,28 @@ function getGroups(){
 
       }
       $('#tabscontent').append("<div class=\"tab-pane\" id=\"tab" + i + "\"><h3>Links do grupo " + groupname + "</h3></div>");
-      
+       $.getJSON('https://graph.facebook.com/' +  id + '?fields=members.fields(picture)&access_token=' + accessToken, function(data){
+          html = '<div class=\"container\">';
+          html += '<ul class="thumbnails">'
+          var members = data['members']['data'];
+          for (var i = 0; i < members.legth; i++){
+              html += '<div class="span3">teste</div>'
+          }
+          html += '</ul>';
+          html += '</div>'
+          $("tab" + i).append(html);
+
+         });
   }
   
   $('.toggle-button-class').toggleButtons({ width: 60, height: 20,  font: {'font-size': '8px'}});
     });
   });
+
+
+
+
+
 
 
 
