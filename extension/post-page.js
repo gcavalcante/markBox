@@ -1,5 +1,6 @@
 var current_group_id = -1;
-var bookmark;
+var title = "";
+var url = "";
 
 function populateGroups(){
   var unsorted_groups = chrome.extension.getBackgroundPage().authenticate(function(accessToken){
@@ -17,10 +18,14 @@ function populateGroups(){
   if (!localStorage.hasOwnProperty('markBox')){
     var grouplist = [];
 
-    var current_tab_id = 0;
-    chrome.tabs.getCurrent(function(tab){current_tab_id = tab.id;})
+    /*
+     *chrome.tabs.getCurrent(function(tab){
+     *    current_tab_id = tab.id;
+     *    chrome.tabs.create({url: "full-options-page.html"}, function(tab){});
+     *    chrome.tabs.remove(current_tab_id);
+     *});
+     */
 
-    chrome.tabs.create({url: "full-options-page.html"}, function(tab){});
     return;
   }
   else{
@@ -55,29 +60,41 @@ function populateGroups(){
   });
 }
 
-//------
+//----------
 
-function showBookmarkInfo() {
-    chrome.bookmarks.getRecent(1, function(bookmarks) {
-        $("#bookmark_info").append("<p>" + bookmarks[0].title + "</p>" +
-                                   "<small><a href=\"" + bookmarks[0].url + "\">" + bookmarks[0].url  + "</small>");
+function takeBookmark() {
+    chrome.tabs.get(parseInt(localStorage.last_tab), function(tab) {
+        title = tab.title;
+        url = tab.url;
 
-        bookmark = bookmarks[0];
+        console.log(title);
+        console.log(url);
+
+       document.getElementById("book_title").textContent = title; 
+       document.getElementById("book_url").textContent = url; 
+       document.getElementById("book_url").href = url; 
     });
+
+ /*
+  *document.getElementById("bookmark_info").append(
+  *    '<p>' + title + '</p>' +
+  *    '<small><a href=\"' + url + '\">' + url + '</a></small>');
+  */
+    
 }
 
 
-//----------
+//-----------
 
+takeBookmark();
 populateGroups();
-showBookmarkInfo();
-
-var teste;
 
 document.getElementById("postButton").addEventListener("click", function(event) {
     //console.log(current_group_id);
     //console.log(bookmark);
     //console.log(document.getElementById("txt_message").value);
+
+
 
     chrome.extension.getBackgroundPage().authenticate(function(accessToken){
         var xhr = new XMLHttpRequest();
@@ -91,10 +108,17 @@ document.getElementById("postButton").addEventListener("click", function(event) 
             }
         };
 
-        var group_post = "/" + current_group_id + "/feed";
-        var message = "message=\"" + document.getElementById("txt_message").value + "\n\n" +
-                       bookmark.title + "\n" + bookmark.url + "\"";
-
+        var group_post = "/" + current_group_id + "/feed/";
+        var message = "message=\"" + document.getElementById("txt_message").value + 
+                      "\n\n" + title + "\n" + url + "\"";
+        
+        /*
+         *var message = 
+         *    "link=\"" + url + "\"&" + 
+         *    "caption=\"" + title + "\"&" +
+         *    "description=\"" + document.getElementById("txt_message").value;
+         */
+        
         console.log(group_post);
         console.log(message);
         console.log(accessToken);
@@ -103,6 +127,13 @@ document.getElementById("postButton").addEventListener("click", function(event) 
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('Authorization', 'OAuth ' + accessToken);
         xhr.send(message);
+
+
+
+        /*
+         *chrome.bookmarks.create({'parentId': group_post,
+         *                         'title': 
+         */
     });
 });
 
