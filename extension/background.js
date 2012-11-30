@@ -338,15 +338,6 @@ function addNewSubTree(parentId, treejson) {
     addTreeNodes(bookmarkArray, String(parentId));
 }
 
-chrome.browserAction.onClicked.addListener(function(event){
-    /*
-     *chrome.tabs.getCurrent(function(tab) {
-     *    localStore.current_tab = tab.id;
-     *});
-     */
-        chrome.tabs.create({url: "post-page.html"}, function(tab){
-        });
-});
        
 
 chrome.tabs.onCreated.addListener(function(tab) {
