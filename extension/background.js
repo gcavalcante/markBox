@@ -19,8 +19,8 @@ function onFacebookLogin() {
           var params = tabs[i].url.split('#')[1].split('&')[0].split('=')[1];
           localStorage.accessToken = params;
 
-          chrome.tabs.remove(tabs[i].id, function(){});
           chrome.tabs.onUpdated.removeListener(onFacebookLogin);
+          chrome.tabs.remove(tabs[i].id, function(){});
 
           authenticationCallback(localStorage.accessToken);
           return;
@@ -34,15 +34,21 @@ function isAuthenticated(callback){
   if(localStorage.accessToken){
 
     $.getJSON(fbEndpoint + 'me?access_token=' + localStorage.accessToken, function(data){
-      if(data.error)
+      if(data.error){
+        console.log("Not authenticated");
+        delete localStorage.accessToken;
         callback(false);
+      }
+
+      console.log("Authenticated");
 
       callback(true);
-    } ).error(function{ callback(false); });
+    } ).error(function(){ console.log("Not authenticated, error"); delete localStorage.accessToken; callback(false); });
  
     return;
   }
 
+  delete localStorage.accessToken;
   callback(false);
 }
 
@@ -50,10 +56,11 @@ function authenticate(callback){
   authenticationCallback = callback;
 
   isAuthenticated(function(isAuth){
-
-    if(isAuth)
+    if(isAuth){
+      console.log("Was already authenticated.")
       return authenticationCallback(localStorage.accessToken);
-    else {
+    } else {
+      console.log("Attempting to authenticate.")
       chrome.tabs.create({ url: fbLoginUrl });
       chrome.tabs.onUpdated.addListener(onFacebookLogin);
     }
