@@ -20,9 +20,9 @@
 
 //Função para ordenar os grupos
 function compare(a,b) {
-  if (a.name < b.name)
+  if (a.name.toLowerCase() < b.name.toLowerCase())
      return -1;
-  if (a.name > name)
+  if (a.name.toLowerCase() > b.name.toLowerCase() )
     return 1;
   return 0;
 }
@@ -63,7 +63,6 @@ function getGroups(){
     var grouplist = JSON.parse(localStorage['markBox']);
   }
   for (var i = 0; i < parsed.length; i++) {
-      console.log(parsed[i]);
       var groupname  = parsed[i]['name'];
       var id  = parsed[i]['id'];
       if (grouplist.indexOf(id) != -1){
