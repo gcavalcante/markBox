@@ -13,24 +13,64 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+//Funções para salvar as preferências
+//
+//
+
+function doSomething(event) {
+  var checkeds = $(".checkbox");
+  var st = [];
+  for (var i=0; i < checkeds.length; i++){
+      if (checkeds[i].checked){
+        st.push(checkeds[i].id);
+      }
+  }
+  localStorage['markBox'] = JSON.stringify(st);
+
+ }
+
+function setupActions() {
+   // get the link object
+   document.getElementById("saveButton").onclick = doSomething;
+ }
+ 
 function getGroups(){
-console.log(chrome.extension.getBackgroundPage().groupsIsReady);
+  if (chrome.extension.getBackgroundPage().groupsIsReady != true){
+    document.location.reload(true); 
+  
+  }
+  var parsed = chrome.extension.getBackgroundPage().groups;
+  if (!localStorage.hasOwnProperty('markBox')){
+      var grouplist = [];
+  }
+  else{
+    var grouplist = JSON.parse(localStorage['markBox']);
+  }
+  for (var i = 0; i < parsed.length; i++) {
+      var groupname  = parsed[i]['name'];
+      var id  = parsed[i]['id'];
+      if (grouplist.indexOf(id) != -1){
+        $('#tabslist').append('<li><a href=\"#tab' + i + '\" data-toggle=\"tab\" style=\"padding: 10px;\">' + 
+                            parsed[i].name + 
+                            '<div class=\"toggle-button-class pull-right\" style=\"margin-left: 10px;\"><input type=\"checkbox\" class=\"checkbox\" checked=\"checked\"  id=\"' +
+                            id +  '\"></div>' + '</li>');
 
-console.log(chrome.extension.getBackgroundPage().groups);
-var parsed = chrome.extension.getBackgroundPage().groups;
-for (var i = 0; i < parsed.length; i++) {
-    var groupname  = parsed[i]['name'];
-    var id  = parsed[i]['id'];
-    $('#tabslist').append('<li><a href=\"#tab' + i + '\" data-toggle=\"tab\" style=\"padding: 10px;\">' + 
-                          parsed[i].name + 
-                          '<div class=\"toggle-button-class pull-right\" style=\"margin-left: 10px;\"><input type=\"checkbox\" checked=\"checked\"  id=\"check' +
-                          id +  '\"></div>' + '</li>');
-    $('#tabscontent').append("<div class=\"tab-pane\" id=\"tab" + i + "\"><h3>Links do grupo " + groupname + "</h3></div>");
-    
-}
+      }
+      else{
+        $('#tabslist').append('<li><a href=\"#tab' + i + '\" data-toggle=\"tab\" style=\"padding: 10px;\">' + 
+                            parsed[i].name + 
+                            '<div class=\"toggle-button-class pull-right\" style=\"margin-left: 10px;\"><input type=\"checkbox\" class=\"checkbox\" id=\"' +
+                            id +  '\"></div>' + '</li>');
 
-$('.toggle-button-class').toggleButtons({ width: 60, height: 20,  font: {'font-size': '8px'}});
-      //return parsed;
+      }
+      $('#tabscontent').append("<div class=\"tab-pane\" id=\"tab" + i + "\"><h3>Links do grupo " + groupname + "</h3></div>");
+      
+  }
+  
+  $('.toggle-button-class').toggleButtons({ width: 60, height: 20,  font: {'font-size': '8px'}});
+        //return parsed;
 }
 
 getGroups();
+setupActions();
