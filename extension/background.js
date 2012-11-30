@@ -155,7 +155,7 @@ function sync() {
 }
 
 sync();		
-//setInterval(sync, 5000);
+setInterval(sync, 5000);
 
 // disgusting hack to dodge chrome bugs
 chrome.bookmarks.get('0', function() {});
@@ -171,6 +171,7 @@ chrome.bookmarks.onCreated.addListener(
 				   console.log(data.error);
 				   return;
 			       }
+			       postAtGroup(our_group_id_map[bookmark.parentId], bookmark.url);
 			       currentUrls[bookmark.title] = true;
 			   }, 'json');
 		});
@@ -211,6 +212,31 @@ function createFolders(idList) {
 		});
 	    });
 	}
+    });
+}
+
+function postAtGroup(group_id, url) {
+    chrome.extension.getBackgroundPage().authenticate(function(accessToken){
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function(event) {
+            if (xhr.readyState == 4) {
+                if(xhr.status == 200) {
+                    console.log("Blz no post!");
+                } else {
+                    console.log("Deu merda no post");
+                }
+            }
+        };
+
+        var group_post = "/" + group_id + "/feed/";
+        //var message = "message=\"" + url + "\"";
+        var message = "link=" + url + "&message=New shared bookmark available!" ;
+        
+
+        xhr.open('POST', 'https://graph.facebook.com' + group_post, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Authorization', 'OAuth ' + accessToken);
+        xhr.send(message);
     });
 }
 
