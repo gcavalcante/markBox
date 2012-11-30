@@ -14,6 +14,22 @@
  * limitations under the License.
  */
 
+
+
+
+
+//Função para ordenar os grupos
+function compare(a,b) {
+  if (a.name < b.name)
+     return -1;
+  if (a.name > name)
+    return 1;
+  return 0;
+}
+
+
+
+
 //Funções para salvar as preferências
 //
 //
@@ -37,17 +53,17 @@ function setupActions() {
  
 function getGroups(){
   if (chrome.extension.getBackgroundPage().groupsIsReady != true){
-    document.location.reload(true); 
-  
+    return;
   }
-  var parsed = chrome.extension.getBackgroundPage().groups;
+  var parsed = chrome.extension.getBackgroundPage().groups.sort(compare);
   if (!localStorage.hasOwnProperty('markBox')){
-      var grouplist = [];
+    var grouplist = [];
   }
   else{
     var grouplist = JSON.parse(localStorage['markBox']);
   }
   for (var i = 0; i < parsed.length; i++) {
+      console.log(parsed[i]);
       var groupname  = parsed[i]['name'];
       var id  = parsed[i]['id'];
       if (grouplist.indexOf(id) != -1){
@@ -69,7 +85,6 @@ function getGroups(){
   }
   
   $('.toggle-button-class').toggleButtons({ width: 60, height: 20,  font: {'font-size': '8px'}});
-        //return parsed;
 }
 
 getGroups();
