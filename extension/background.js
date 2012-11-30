@@ -68,6 +68,7 @@ var shouldOpenOptionTab = true;
 var shouldListen = true;
 
 var lastTreeAdded = null;
+var firstRun = true;
 
 function sync() {
     authenticate(function(accessToken) {
@@ -100,7 +101,7 @@ function sync() {
 				     }
 				 ]
 				};
-		// findBookmarkFolder("Shared Bookmarks", function (id, title) {
+		//findBookmarkFolder("Shared Bookmarks", function (id, title) {
 		//     console.log(id);
 		//     chrome.bookmarks.getSubTree(String(id), function (results) {
 		// 	var currentTree = results[0];
@@ -111,12 +112,22 @@ function sync() {
 		//     })
 		// });
 
+		console.log(dataToAdd);
 		if (JSON.stringify(lastTreeAdded) != JSON.stringify(dataToAdd)) {
-
-		    findBookmarkFolder("Shared Bookmarks", removeFolder);
 		    
 		    shouldListen = false;
-		    addNewTree(dataToAdd);
+
+		    if (!lastTreeAdded) {
+			findBookmarkFolder("Shared Bookmarks", removeFolder);
+			addNewTree(dataToAdd);
+		    }
+		    else {
+			findBookmarkFolder("Shared Bookmarks", function (id, title) {
+			    console.log(id);
+			    console.log(data.bookmarks);
+			    addNewSubTree(id, data.bookmarks);
+			});
+		    }
 		    setTimeout(function() { shouldListen = true }, 2000);
 
 		    if (shouldOpenOptionTab) {
@@ -169,8 +180,7 @@ function getSharedBookmarks() {
 }
 
 function getGroupsFromLocalStorage() {
-    return JSON.parse(localStorage.markBox);
-    return mygroups;
+return JSON.parse(localStorage['markBox']);
 }
 
 function findBookmarkFolder(query, callback) {
@@ -205,12 +215,14 @@ function addTreeNode(node, previous, callback) {
     var nodecopy = {};
     nodecopy['parentId'] = previous;
     nodecopy['title'] = node['title'];
-    if (node.hasOwnProperty('url'))
+    if (node.hasOwnProperty('url')) {
 	nodecopy['url'] = node['url'];
-    
-    if(currentUrls[previous] && currentUrls[previous][node['url']])
-        return;
-
+	
+	if(currentUrls[node['url']])
+            return;
+	if(currentUrls[previous] && currentUrls[previous][node['url']])
+            return;
+    }
     
     chrome.bookmarks.create(nodecopy, function (node_created) {
     	console.log(node_created);
@@ -218,9 +230,14 @@ function addTreeNode(node, previous, callback) {
     	    our_group_id_map[node_created.id] = groupIdFromGroupName(node_created.title);
     	if (callback && node_created){
     	    callback(node['children'], node_created['id']);
-            currentUrls[previous][node['url']] = true;
+            currentUrls[node['url']] = true;
+            //currentUrls[previous][node['url']] = true;
         }
     });
+    // if (!currentUrls[previous])
+    // 	currentUrls[previous] = {};
+    currentUrls[node['url']] = true;
+    //currentUrls[previous][node['url']] = true;
 }
 
 function addTreeNodes(bookmarkArray, previous) {
@@ -239,6 +256,10 @@ function addNewTree(treejson) {
   addTreeNodes(bookmarkArray, '1');
 }
 
+function addNewSubTree(parentId, treejson) {
+    var bookmarkArray = treejson;
+    addTreeNodes(bookmarkArray, String(parentId));
+}
 
 function openOptions(){
   chrome.tabs.create({url: "full-options-page.html"}, function(tab){
