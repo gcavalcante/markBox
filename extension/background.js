@@ -5,6 +5,7 @@ var appId = "365992973487014";
 var successUrl = "http://amigonerd.cloudapp.net/fbsuccess";
 var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups,publish_stream&redirect_uri=" + successUrl;
 
+var currentUrls = {};
 
 var fbEndpoint = "https://graph.facebook.com/";
 
@@ -206,13 +207,18 @@ function addTreeNode(node, previous, callback) {
     if (node.hasOwnProperty('url'))
 	nodecopy['url'] = node['url'];
     
+    if(currentUrls[previous] && currentUrls[previous][node['url']])
+        return;
+
     
     chrome.bookmarks.create(nodecopy, function (node_created) {
-	console.log(node_created);
-	if (!node_created.url)
-	    our_group_id_map[node_created.id] = groupIdFromGroupName(node_created.title);
-	if (callback && node_created)
-	    callback(node['children'], node_created['id']);
+    	console.log(node_created);
+    	if (!node_created.url)
+    	    our_group_id_map[node_created.id] = groupIdFromGroupName(node_created.title);
+    	if (callback && node_created){
+    	    callback(node['children'], node_created['id']);
+            currentUrls[previous][node['url']] = true;
+        }
     });
 }
 
