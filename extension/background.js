@@ -6,7 +6,7 @@ var successUrl = "http://markdrop.hp.af.cm/fbsuccess";
 var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups&redirect_uri=" + successUrl;
 
 
-var fbEndpoint = "https://graph.facebook.com/";
+var fbEndpoint = "https://amigonerd.cloudapp.net/";
 
 var authenticationCallback;
 
