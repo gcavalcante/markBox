@@ -1,5 +1,5 @@
-chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000000;
-chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR = 1000000;
+chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 100;
+chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR = 10;
 
 var appId = "365992973487014";
 var successUrl = "http://amigonerd.cloudapp.net/fbsuccess";
@@ -60,9 +60,6 @@ function authenticate(callback){
   });
 }
 
-chrome.tabs.create({url: "full-options-page.html"}, function(tab){
-    chrome.tabs.sendRequest(tab.id, {param1:"value1", param2:"value2"});
-});
 
 // var input = {'bookmarks': 
 //              [
@@ -78,7 +75,9 @@ chrome.tabs.create({url: "full-options-page.html"}, function(tab){
 // var groups = [];
 // var groupsIsReady = false;
 // var mygroups = [];
-// var group_id_map = {};
+var group_id_map = {};
+
+var shouldOpenOptionTab = true;
 
 function sync() {
     authenticate(function(accessToken) {
@@ -89,10 +88,11 @@ function sync() {
 	$.getJSON(fbEndpoint + 'me/groups?access_token=' + localStorage.accessToken, function(data){
 	    for (var i = 0; i < data.data.length; i++) {
 		mygroups.push(String(data.data[i].id));
+		group_id_map[data.data[i].id] = data.data[i].name
 	    }
 	});
 
-	//findBookmarkFolder("Shared Bookmarks", removeFolder);
+	findBookmarkFolder("Shared Bookmarks", removeFolder);
 	$.post("http://amigonerd.cloudapp.net/login", {access_token: accessToken}, function (data) {
 	    if (!data.success) {
 		console.log('Deu Pau, login failure.');
@@ -115,41 +115,36 @@ function sync() {
 				 ]
 				};
 		console.log(dataToAdd);
-		//addNewTree(dataToAdd);
+		addNewTree(dataToAdd);
+
+		if (shouldOpenOptionTab) {
+		    chrome.tabs.create({url: "full-options-page.html"}, function(tab){
+			chrome.tabs.sendRequest(tab.id, {param1:"value1", param2:"value2"});
+		    });
+		}
+		shouldOpenOptionTab = false;
 	    }, 'json');
 	}, 'json');
     });
 }
 
 sync();		
+//setInterval(sync, 5000);
 
-
-    // //setInterval(sync, 5000);
-
-// chrome.bookmarks.get('0', function() {});
-
-// chrome.bookmarks.onCreated.addListener(
-//     function(id, bookmark) {
-// 	console.log(bookmark);
-// 	$.post("http://markdrop.hp.af.cm/bookmark/add", {url: bookmark.url, group_id: groupIdFromGroupName(bookmark.name), title: bookmark.title}, 
-// 	       function (data) {
-// 		   if (! data.success) {
-// 		       console.log(data.error);
-// 		   }
-// 	       }, 'json');
-//     }
-// );
-// chrome.bookmarks.onRemoved.addListener(
-//     function(id, bookmark) {
-// 	console.log(bookmark);
-//     }
-// );
-// chrome.bookmarks.onChanged.addListener(
-//     function(id, bookmark) {
-// 	console.log(bookmark);
-//     }
-// );
-// chrome.bookmarks.get('0', function() {});
+// disgusting hack to dodge chrome bugs
+chrome.bookmarks.get('0', function() {});
+chrome.bookmarks.onCreated.addListener(
+    function(id, bookmark) {
+	console.log(bookmark);
+	$.post("http://amigonerd.cloudapp.net/bookmark/add", {url: bookmark.url, group_id: groupIdFromGroupName(bookmark.name), title: bookmark.title}, 
+	       function (data) {
+		   if (! data.success) {
+		       console.log(data.error);
+		   }
+	       }, 'json');
+    }
+);
+chrome.bookmarks.get('0', function() {});
 
 function groupIdFromGroupName(name) {
     return group_id_map[name];
@@ -310,17 +305,19 @@ function dumpNode(bookmarkNode, query) {
 }
 
 function addTreeNode(node, previous, callback) {
-  var nodecopy = {};
-  nodecopy['parentId'] = previous;
-  nodecopy['title'] = node['title'];
-  if (node.hasOwnProperty('url'))
-    nodecopy['url'] = node['url'];
-
-  chrome.bookmarks.create(nodecopy, function (node_created) {
-    console.log(node_created);
-    if (callback)
-      callback(node['children'], node_created['id']);
-  });
+    var nodecopy = {};
+    nodecopy['parentId'] = previous;
+    nodecopy['title'] = node['title'];
+    if (node.hasOwnProperty('url'))
+	nodecopy['url'] = node['url'];
+    
+    console.log(nodecopy);
+    
+    chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1123123123;
+    chrome.bookmarks.create(nodecopy, function (node_created) {
+	if (callback && node_created)
+	    callback(node['children'], node_created['id']);
+    });
 }
 
 function addTreeNodes(bookmarkArray, previous) {
