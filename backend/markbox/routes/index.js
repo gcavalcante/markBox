@@ -33,8 +33,9 @@ var revision_id = 0;
  * GET home page.
  */
 
-var request = require('request'),
-ObjectID = require('mongodb').ObjectID;
+ var db = require('mongodb'),
+ request = require('request'),
+ ObjectID = db.ObjectID;
 
 
  function requireLogin(req, res){
@@ -82,8 +83,6 @@ exports.add_bookmark = function(req, res){
   if(!req.body.url || !req.body.group_id || !req.body.title)
     return res.json({ success: false, error: "Missing fields"});
 
-  var db = require('mongodb');
-
   db.connect(mongourl, function(err, conn){
     if(err)
       return res.json({ success: false, error: err });
@@ -105,7 +104,7 @@ exports.add_bookmark = function(req, res){
 
         revision_id++;
 
-        db.close();
+        conn.close();
         return res.json({ success: true });
       });
 
@@ -118,8 +117,6 @@ exports.delete_bookmark = function(req, res){
 
   if(!req.body.id)
     return res.json({ success: false, error: "Missing fields"});
-
-  var db = require('mongodb');
 
   db.connect(mongourl, function(err, conn){
     if(err)
@@ -141,7 +138,7 @@ exports.delete_bookmark = function(req, res){
             return res.json({ success: false, error: err });
 
           revision_id++;
-          db.close();
+          conn.close();
 
           return res.json({ success: true });
         });
@@ -174,8 +171,6 @@ exports.user_links = function(req, res){
     }
 
     var bookmarks_by_group = {};
-
-    var db = require('mongodb');
 
     db.connect(mongourl, function(err, conn){
       if(err)
@@ -237,7 +232,7 @@ exports.user_links = function(req, res){
           output['success'] = true;
           output['revision_id'] = revision_id;
 
-          db.close();
+          conn.close();
 
           res.json(output);
 
@@ -273,8 +268,6 @@ exports.user_linklist = function(req, res){
     }
 
     var bookmarks_by_group = {};
-
-    var db = require('mongodb');
 
     db.connect(mongourl, function(err, conn){
       if(err)
@@ -337,7 +330,7 @@ exports.user_linklist = function(req, res){
           output['success'] = true;
           output['revision_id'] = revision_id;
 
-          db.close();
+          conn.close();
 
           res.json(output);
 
@@ -369,8 +362,6 @@ exports.user_sync = function(req, res){
     }
 
     var output = {};
-
-    var db = require('mongodb');
 
     db.connect(mongourl, function(err, conn){
       if(err)
@@ -406,7 +397,7 @@ exports.user_sync = function(req, res){
             }
           }
 
-          db.close();
+          conn.close();
 
           res.json(output);
 
