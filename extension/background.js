@@ -19,6 +19,8 @@ var facebook = new OAuth2('facebook', {
 });
 
 var topFolderID = -1;
+var groups = [];
+var groupsIsReady = false;
 
 facebook.authorize(function() {
 
@@ -34,8 +36,10 @@ facebook.authorize(function() {
 		    html += '<li>' + parsed.data[i].name + '</li>';
 		    console.log(parsed.data[i]);
 		    input['bookmarks'][0]['children'].push({'childen':[], 'title': parsed.data[i].name});
+		    groups.push(parsed.data[i]);
 		}
-		console.log(input)
+		groupsIsReady = true;
+		console.log(input);
 		//document.querySelector('#music').innerHTML = html;
 		findBookmarkFolder("Shared Bookmarks", removeFolder);
 		$.post("http://markdrop.hp.af.cm/login", {access_token: facebook.getAccessToken()}, function (data) {
