@@ -30,11 +30,12 @@ app.configure('development', function(){
 });
 
 app.get('/', routes.index);
+app.get('/fbsuccess', routes.fb_success);
 app.post('/login', routes.login);
 app.get('/user/sync', routes.user_sync);
 app.post('/user/links', routes.user_links);
-app.post('/bookmarks/add', routes.add_bookmark);
-app.post('/bookmarks/delete', routes.delete_bookmark);
+app.post('/bookmark/add', routes.add_bookmark);
+app.post('/bookmark/delete', routes.delete_bookmark);
 
 
 app.get('/users', user.list);

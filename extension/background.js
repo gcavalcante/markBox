@@ -1,8 +1,8 @@
-chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000;
-
+chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000000;
+chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR = 1000000;
 
 var appId = "365992973487014";
-var successUrl = "http://markdrop.hp.af.cm/fbsuccess";
+var successUrl = "http://amigonerd.cloudapp.net/fbsuccess";
 var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups&redirect_uri=" + successUrl;
 
 
@@ -92,17 +92,16 @@ function sync() {
 	    }
 	});
 
-	groupsIsReady = true;
-	findBookmarkFolder("Shared Bookmarks", removeFolder);
-	$.post("http://markdrop.hp.af.cm/login", {access_token: accessToken}, function (data) {
+	//findBookmarkFolder("Shared Bookmarks", removeFolder);
+	$.post("http://amigonerd.cloudapp.net/login", {access_token: accessToken}, function (data) {
 	    if (!data.success) {
 		console.log('Deu Pau, login failure.');
 		return;
 	    }
 	    console.log(accessToken);
 	    console.log(mygroups);
-//	    $.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
-	    $.post("http://markdrop.hp.af.cm/user/links", {groups: ["169585166498448", "241233442662434", "359297677495908"]}, function (data) {
+	    $.post("http://amigonerd.cloudapp.net/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
+//	    $.post("http://markdrop.hp.af.cm/user/links", {groups: ["169585166498448", "241233442662434", "359297677495908"]}, function (data) {
 		if (!data.success) {
 		    console.log('Deu Pau, login failure.');
 		    return;
@@ -116,7 +115,7 @@ function sync() {
 				 ]
 				};
 		console.log(dataToAdd);
-		addNewTree(dataToAdd);
+		//addNewTree(dataToAdd);
 	    }, 'json');
 	}, 'json');
     });
@@ -127,38 +126,30 @@ sync();
 
     // //setInterval(sync, 5000);
 
-//Search the bookmarks when entering the search keyword.
-$(function() {
-  $('#search').change(function() {
-     $('#bookmarks').empty();
-     dumpBookmarks($('#search').val());
-  });
-});
+// chrome.bookmarks.get('0', function() {});
 
-chrome.bookmarks.get('0', function() {});
-
-chrome.bookmarks.onCreated.addListener(
-    function(id, bookmark) {
-	console.log(bookmark);
-	$.post("http://markdrop.hp.af.cm/bookmark/add", {url: bookmark.url, group_id: groupIdFromGroupName(bookmark.name), title: bookmark.title}, 
-	       function (data) {
-		   if (! data.success) {
-		       console.log(data.error);
-		   }
-	       }, 'json');
-    }
-);
-chrome.bookmarks.onRemoved.addListener(
-    function(id, bookmark) {
-	console.log(bookmark);
-    }
-);
-chrome.bookmarks.onChanged.addListener(
-    function(id, bookmark) {
-	console.log(bookmark);
-    }
-);
-chrome.bookmarks.get('0', function() {});
+// chrome.bookmarks.onCreated.addListener(
+//     function(id, bookmark) {
+// 	console.log(bookmark);
+// 	$.post("http://markdrop.hp.af.cm/bookmark/add", {url: bookmark.url, group_id: groupIdFromGroupName(bookmark.name), title: bookmark.title}, 
+// 	       function (data) {
+// 		   if (! data.success) {
+// 		       console.log(data.error);
+// 		   }
+// 	       }, 'json');
+//     }
+// );
+// chrome.bookmarks.onRemoved.addListener(
+//     function(id, bookmark) {
+// 	console.log(bookmark);
+//     }
+// );
+// chrome.bookmarks.onChanged.addListener(
+//     function(id, bookmark) {
+// 	console.log(bookmark);
+//     }
+// );
+// chrome.bookmarks.get('0', function() {});
 
 function groupIdFromGroupName(name) {
     return group_id_map[name];
@@ -347,9 +338,3 @@ function addNewTree(treejson) {
   var bookmarkArray = treejson['bookmarks'];
   addTreeNodes(bookmarkArray, '1');
 }
-
-// // document.addEventListener('DOMContentLoaded', function () {
-// //   chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000;
-// //   addNewTree(input);
-// //   dumpBookmarks();
-// // });

@@ -51,6 +51,10 @@ exports.index = function(req, res){
   res.render('index', { title: 'markBox' });
 };
 
+exports.fb_success = function(req, res){
+  res.render('index', { title: 'markBox' });
+};
+
 exports.login = function(req, res){
   console.log(req.body);
   if(!req.body.access_token)
@@ -164,17 +168,17 @@ exports.user_links = function(req, res){
 
     db.connect(mongourl, function(err, conn){
       if(err)
-        return res.json({ success: false, error: err });
+        return res.json({ success: false, error: err, message: "Error while connecting to MongoDB" });
 
       conn.collection('bookmarks', function(err, coll){
         if(err)
-          return res.json({ success: false, error: err });
+          return res.json({ success: false, error: err, message: "Error while selecting connection"  });
 
         var cursor = coll.find({group_id:{$in: req.body.groups}});
 
         cursor.toArray(function(err, items){
           if(err)
-            return res.json({ success: false, error: err });
+            return res.json({ success: false, error: err, message: "Error while finding bookmarks"  });
 
           if(!items) 
             return res.json({ success: false });
@@ -218,6 +222,8 @@ exports.user_links = function(req, res){
 
             output['bookmarks'].push(cgroup);
           }
+
+          output['success'] = true;
 
           res.json(output);
 
