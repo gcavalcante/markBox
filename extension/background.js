@@ -1,6 +1,9 @@
+chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE = 1000;
+
+
 var appId = "365992973487014";
 var successUrl = "http://markdrop.hp.af.cm/fbsuccess";
-var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=email&redirect_uri=" + successUrl;
+var fbLoginUrl = "https://www.facebook.com/dialog/oauth?client_id=" + appId + "&response_type=token&scope=user_groups&redirect_uri=" + successUrl;
 
 
 var fbEndpoint = "https://graph.facebook.com/";
@@ -57,13 +60,6 @@ function authenticate(callback){
   });
 }
 
-authenticate(function(){
-  console.log("Authenticated.");
-  $.getJSON(fbEndpoint + 'me/groups?access_token=' + localStorage.accessToken, function(data){
-    console.log(data);
-  });
-});
-
 chrome.tabs.create({url: "full-options-page.html"}, function(tab){
     chrome.tabs.sendRequest(tab.id, {param1:"value1", param2:"value2"});
 });
@@ -85,21 +81,28 @@ chrome.tabs.create({url: "full-options-page.html"}, function(tab){
 // var group_id_map = {};
 
 function sync() {
-    authenticate(function() {
+    authenticate(function(accessToken) {
 	
 	groups = [];
 	mygroups = [];
 	
+	$.getJSON(fbEndpoint + 'me/groups?access_token=' + localStorage.accessToken, function(data){
+	    for (var i = 0; i < data.data.length; i++) {
+		mygroups.push(String(data.data[i].id));
+	    }
+	});
+
 	groupsIsReady = true;
 	findBookmarkFolder("Shared Bookmarks", removeFolder);
-	$.post("http://markdrop.hp.af.cm/login", {access_token: facebook.getAccessToken()}, function (data) {
+	$.post("http://markdrop.hp.af.cm/login", {access_token: accessToken}, function (data) {
 	    if (!data.success) {
 		console.log('Deu Pau, login failure.');
 		return;
 	    }
-	    console.log(facebook.getAccessToken());
+	    console.log(accessToken);
 	    console.log(mygroups);
-	    $.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
+//	    $.post("http://markdrop.hp.af.cm/user/links", {groups: getGroupsFromLocalStorage()}, function (data) {
+	    $.post("http://markdrop.hp.af.cm/user/links", {groups: ["169585166498448", "241233442662434", "359297677495908"]}, function (data) {
 		if (!data.success) {
 		    console.log('Deu Pau, login failure.');
 		    return;
@@ -119,7 +122,7 @@ function sync() {
     });
 }
 
-		
+sync();		
 
 
     // //setInterval(sync, 5000);
